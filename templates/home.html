@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+  {% block home_active %}
+    "nav-item active"
+  {% endblock %}
+
+  {% block control_active %}
+    "nav-item"
+  {% endblock %}
+
+  {% block weekly_active %}
+    "nav-item"
+  {% endblock %}
+
+  {% block groceries_active %}
+    "nav-item"
+  {% endblock %}
+
+  {% block about_active %}
+    "nav-item"
+  {% endblock %}
+
+  {% block home %}
+    <div class="row">
+      <div class="col-12">
+        <h1 class="text-center">Welcome to the Goat-Network</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-8">
+        {% for member in members %}
+          <div class="jumbotron">
+            <div class="row">
+              <div class="col-3">
+                PROFILE PIC
+              </div>
+              <div class="col-9">
+                <h3>{{ member.name }}</h3>
+                <p>Josti-bucks: {{ member.bucks }}</p>
+                <p>Task: {{ member.task }}</p>
+                <p>Home: {{ member.home }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="col-4">
+        <div class="jumbotron">
+          <h3>Chug Chart</h3>
+        </div>
+      </div>
+    </div>
+
+  {% endblock %}

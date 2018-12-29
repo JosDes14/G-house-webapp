@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}"/>
+
+    <title>Goathouse</title>
+  </head>
+  <body>
+    <div class="container">
+      <nav class="navbar navbar-expand-md bg-dark justify-content-center navbar-expand navbar-dark fixed-top">
+        <a class="navbar-brand" href="#">Goathouse</a>
+        <ul class="navbar-nav">
+          <li class={% block home_active %}{% endblock %}><a class="nav-link" href="C:\Users\josti\Desktop\G_House_webapp\templates\home.html">Home</a></li>
+          <li class={% block control_active %}{% endblock %}><a class="nav-link" href=#>Control</a></li>
+          <li class={% block weekly_active %}{% endblock %}><a class="nav-link" href=#>Weekly Tasks</a></li>
+          <li class={% block groceries_active %}{% endblock %}><a class="nav-link" href=#>Groceries</a></li>
+          <li class={% block about_active %}{% endblock %}><a class="nav-link" href=#>About</a></li>
+          <li class="nav-item"><a class="nav-link text-primary" href=#>Login</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="container bg-light" style="margin-top:60px">
+        {% block home %}
+        {% endblock %}
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+  </body>
+</html>
