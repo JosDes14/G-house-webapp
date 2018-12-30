@@ -1,8 +1,11 @@
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template, url_for, flash, redirect
 from forms import LoginForm
-app = Flask(__name__)
 
+app = Flask(__name__)
 app.config['SECRET_KEY'] = '09141e18147de59340b72a2db35ba8e6'
+
+
+#Dummy data. This will be put in database later
 
 members = [
     {
@@ -42,6 +45,16 @@ members = [
 @app.route("/home")
 def home():
     return render_template('home.html', members=members)
+
+@app.route("/login", methods=['GET','POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        if form.email.data == "test@mail.com" and form.password.data == "password":
+            return redirect(url_for('home'))
+        else:
+            flash("Login not successful. Check email and password.", 'danger')
+    return render_template('login.html', title='Login', form=form)
 
 @app.route("/about")
 def about():

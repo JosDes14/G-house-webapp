@@ -19,18 +19,27 @@
       <nav class="navbar navbar-expand-md bg-dark justify-content-center navbar-expand navbar-dark fixed-top">
         <a class="navbar-brand" href="#">Goathouse</a>
         <ul class="navbar-nav">
-          <li class={% block home_active %}{% endblock %}><a class="nav-link" href="C:\Users\josti\Desktop\G_House_webapp\templates\home.html">Home</a></li>
+          <li class={% block home_active %}{% endblock %}><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
           <li class={% block control_active %}{% endblock %}><a class="nav-link" href=#>Control</a></li>
           <li class={% block weekly_active %}{% endblock %}><a class="nav-link" href=#>Weekly Tasks</a></li>
           <li class={% block groceries_active %}{% endblock %}><a class="nav-link" href=#>Groceries</a></li>
           <li class={% block about_active %}{% endblock %}><a class="nav-link" href=#>About</a></li>
-          <li class="nav-item"><a class="nav-link text-primary" href=#>Login</a></li>
+          <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('login') }}">Login</a></li>
         </ul>
       </nav>
     </div>
 
     <div class="container bg-light" style="margin-top:60px">
-        {% block home %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages%}
+              <div class="alert-{{ category }}">
+                <p class="text-center">{{ message }}</p>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}
         {% endblock %}
     </div>
 
