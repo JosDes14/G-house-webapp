@@ -20,27 +20,82 @@
         <a class="navbar-brand" href="#">Goathouse</a>
         <ul class="navbar-nav">
           <li class={% block home_active %}{% endblock %}><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
-          <li class={% block control_active %}{% endblock %}><a class="nav-link" href=#>Control</a></li>
-          <li class={% block weekly_active %}{% endblock %}><a class="nav-link" href=#>Weekly Tasks</a></li>
           <li class={% block groceries_active %}{% endblock %}><a class="nav-link" href=#>Groceries</a></li>
-          <li class={% block about_active %}{% endblock %}><a class="nav-link" href=#>About</a></li>
+          <li class={% block calendar_active %}{% endblock %}><a class="nav-link" href=#>Calendar</a></li>
+          <li class={% block automation_active %}{% endblock %}><a class="nav-link" href=#>Automation</a></li>
           <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('login') }}">Login</a></li>
         </ul>
       </nav>
     </div>
 
-    <div class="container bg-light" style="margin-top:60px">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages%}
-              <div class="alert-{{ category }}">
-                <p class="text-center">{{ message }}</p>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-        {% block content %}
-        {% endblock %}
+    <div class="container bg-light d-none d-sm-block" style="margin-top:60px">
+      <div class="row">
+        <div class="col-md-8">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages%}
+                <div class="alert-{{ category }}">
+                  <p class="text-center">{{ message }}</p>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+          {% block content %}
+          {% endblock %}
+        </div>
+        <div class="col-md-4">
+          <div class="sidebar">
+            <h3 style="margin-top:10px">Chug Chart</h3>
+            <div class="sidebar-info">
+              <small>The first row indicates the givers, and the first column indicates the takers.</small>
+            </div>
+            <table id="chug">
+              <tr>
+                <th id="chug"></th>
+                {% for member in members %}
+                  <th id="chug">{{ member.username }}</th>
+                {% endfor %}
+              </tr>
+              {% for row in range(5) %}
+                <tr>
+                  <th id="chug">{{members[row]['username']}}</th>
+                  {% for col in range(5) %}
+                    {% if chug[row][col] != None %}
+                      <td id="chug">{{ chug[row][col] }}</td>
+                    {% else %}
+                      <td id="chug" bgcolor="#4c5e4c"></td>
+                    {% endif %}
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </table>
+            <h3 style="margin-top:10px">Member Info</h3>
+            <table class="table">
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Bucks</th>
+                <th>Task</th>
+              </tr>
+              {% for member in members %}
+                <tr>
+                  <td>{{ member.username }}</td>
+                  <td>{{ member.status }}</td>
+                  <td>{{ member.bucks }}</td>
+                  <td>{{ member.task }}</td>
+                </tr>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container bg-light d-block d-sm-none" style="margin-top:60px">
+      <div class="sidebar">
+        <h2>Mobile Layout</h2>
+        <small>Scroll down for updates.</small>
+      </div>
     </div>
 
 
