@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!-- Meta Tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}"/>
+
+    <title>Goathouse</title>
+  </head>
+  <body style="background-image: url('{{ url_for('static', filename='images/our_goat.jpg') }}')">
+
+    <div class="container d-none d-sm-block">
+      <nav class="navbar bg-dark navbar-expand navbar-dark fixed-top">
+        <a class="navbar-brand" href="#">Goathouse</a>
+        {% if current_user.is_authenticated %}
+        <ul class="navbar-nav mr-auto">
+          <li class={% block home_active %}{% endblock %}><a class="nav-link" href="{{ url_for('home') }}">Home</a></li>
+          <li class={% block groceries_active %}{% endblock %}><a class="nav-link" href=#>Groceries</a></li>
+          <li class={% block calendar_active %}{% endblock %}><a class="nav-link" href=#>Calendar</a></li>
+          <li class={% block automation_active %}{% endblock %}><a class="nav-link" href=#>Automation</a></li>
+        </ul>
+        {% endif %}
+        <ul class="navbar-nav ml-auto">
+          {% if current_user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('account') }}">Account</a></li>
+            <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('login') }}">Login</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top d-block d-sm-none">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand" href="#">Goathouse</a>
+      <div class="collapse navbar-collapse" id="collapsibleNavbar">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Groceries</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Calendar</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Automation</a>
+          </li>
+          {% if current_user.is_authenticated %}
+            <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('logout') }}">Logout</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link text-primary" href="{{ url_for('login') }}">Login</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container d-none d-sm-block" id="main" style="margin-top:60px">
+      <div class="row">
+        <div class="col-lg-8">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages%}
+                  <div class="alert alert-{{ category }}">
+                    <p class="text-center">{{ message }}</p>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            {% block content %}
+            {% endblock %}
+          </div>
+        <div class="col-lg-4">
+          {% if current_user.is_authenticated %}
+            <div class="sidebar">
+              <h3 style="margin-top:10px">Chug Chart</h3>
+              <div class="sidebar-info">
+                <small>The first row indicates the givers, and the first column indicates the takers.</small>
+              </div>
+              <table id="chug">
+                <tr>
+                  <th id="chug"></th>
+                  {% for member in members %}
+                    <th id="chug">{{ member.username }}</th>
+                  {% endfor %}
+                </tr>
+                {% for row in range(5) %}
+                  <tr>
+                    <th id="chug">{{members[row]['username']}}</th>
+                    {% for col in range(5) %}
+                      {% if chug[row][col] != None %}
+                        <td id="chug">{{ chug[row][col] }}</td>
+                      {% else %}
+                        <td id="chug" bgcolor="#65737e"></td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </table>
+              <h3 style="margin-top:10px">Members</h3>
+              <table class="table" id="members">
+                <tr>
+                  <th>Name</th>
+                  <th>Status</th>
+                  <th>Bucks</th>
+                  <th>Task</th>
+                </tr>
+                {% for member in members %}
+                  <tr>
+                    <td>{{ member.username }}</td>
+                    <td>{{ member.status }}</td>
+                    <td>{{ member.bucks }}</td>
+                    <td>{{ member.task }}</td>
+                  </tr>
+                {% endfor %}
+              </table>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="container bg-light d-block d-sm-none" style="margin-top:60px">
+      <div class="sidebar">
+        <h2>Mobile Layout</h2>
+        <small>Under construction</small>
+      </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+  </body>
+</html>
+
+
+<!--tester-->

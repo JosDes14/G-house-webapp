@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+  {% block home_active %}
+    "nav-item active"
+  {% endblock %}
+
+  {% block content %}
+  <!--  <div class="row">
+      <div class="col-12">
+        <h1 class="text-center">Welcome to the Goat-Network</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-8">
+        {% for member in members %}
+          <div class="jumbotron">
+            <div class="row">
+              <div class="col-3">
+                PROFILE PIC
+              </div>
+              <div class="col-9">
+                <h3>{{ member.name }}</h3>
+                <p>Josti-bucks: {{ member.bucks }}</p>
+                <p>Task: {{ member.task }}</p>
+                <p>Home: {{ member.home }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="col-4">
+        <div class="jumbotron">
+          <h3>Chug Chart</h3>
+        </div>
+      </div>
+    </div> -->
+    {% if current_user.is_authenticated %}
+      <div class="row" style="margin-top:10px">
+        <div class="col-9">
+          <h2>House Updates</h2>
+        </div>
+        <div class="col-3 text-right">
+          <!--<input class="btn btn-primary" type="submit" value="Create Post">-->
+          <a href="https://www.pornhub.com/view_video.php?viewkey=1043149990"><small>Click me!</small></a>
+        </div>
+      </div>
+      <hr>
+    {% else %}
+      <h4 style='margin-top:10px'>Uh oh, It looks like somebody is not logged in...</h4>
+      <hr>
+      <small>If you have an account, please log in to gain full access to this wonderful site. If you are not a member, then that is unfortunate, for you will not be able to gain access!</small>
+    {% endif %}
+
+  {% endblock %}
