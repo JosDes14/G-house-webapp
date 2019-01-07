@@ -118,7 +118,7 @@
                 </tr>
                 {% for member in members %}
                   <tr>
-                    <td>{{ member.username }}</td>
+                    <td><a href="{{ url_for('profile', username=member.username) }}">{{ member.username }}</a></td>
                     <td>{{ member.status }}</td>
                     <td>{{ member.bucks }}</td>
                     <td>{{ member.task }}</td>

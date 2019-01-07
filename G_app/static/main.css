@@ -17,12 +17,21 @@ body {
   margin-top:1%;
 }
 
-.acccount-section {
+.account-section {
   background-color:  rgba(200, 200, 200, 0.8);
   border: 0.5px solid rgb(150, 150, 150);
   border-radius: 3px;
-  padding: 5px;
+  padding: 10px;
 }
+
+.post-section {
+  margin-top: 5px;
+  background-color:  rgb(160, 160, 160);
+  border: 0.5px solid rgb(130, 130, 130);
+  border-radius: 1px;
+  padding: 10px;
+}
+
 
 .account-img {
   height: 100px;

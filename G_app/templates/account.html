@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
   {% block content %}
-    <h2>Account Info</h2>
+    <h2>My Account</h2>
     <hr>
-    <div class="acccount-section">
+    <div class="account-section">
       <div class="media">
         <img class="rounded-circle account-img" src="{{ user_image }}" alt="user_image">
         <div class="media-body">
@@ -11,7 +11,7 @@
         </div>
       </div>
     </div>
-    <div class="account-section" style="margin-top:10px">
+    <div class="account-section" style="margin-top:10px; margin-bottom:10px">
       <form method="POST" action="" enctype="multipart/form-data" novalidate>
         {{ form.hidden_tag() }} <!-- In combination with hidden key, prevents certain attacks... -->
         <fieldset class="form-group">
@@ -21,7 +21,7 @@
             {% if form.username.errors %}
                 {{ form.username(class="form-control form-control-lg is-invalid") }}
                 <div class="invalid-feedback">
-                    {% for error in form.password.errors %}
+                    {% for error in form.username.errors %}
                         <span>{{ error }}</span>
                     {% endfor %}
                 </div>
@@ -39,7 +39,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                {{ form.email(class="form-control form-control-lg") }}
+              {{ form.email(class="form-control form-control-lg") }}
             {% endif %}
           </div>
           <div class="form-group">
@@ -50,6 +50,7 @@
                   <span class="text-danger">{{ error }}</span><br>
               {% endfor %}
             {% endif %}
+          </div>
         </fieldset>
         <div class="form-group">
           {{ form.submit(class="btn btn-outline-info") }}

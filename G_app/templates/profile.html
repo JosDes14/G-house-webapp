@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+  {% block content %}
+    <h2>{{ user.name }}</h2>
+    <div class="account-section">
+      <div class="media">
+        <img class="rounded-circle account-img" src="{{ user_image }}" alt="user_image">
+        <div class="media-body">
+          <p>
+            <b>Username:</b> {{ user.username }}<br>
+            <b>Email:</b> {{ user.email }}<br>
+            <b>Bucks:</b> {{ user.bucks }}<br>
+            <b>Task:</b> {{ user.task }}<br>
+            <b>Status:</b> {{ user.status }}
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="account-section" style="margin-top:10px">
+      <h4>Posts by {{ user.username }}:</h4>
+      {% for post in user.posts %}
+        <div class="post-section">
+          <h5 class="border-bottom border-secondary">{{ post.title }}</h5>
+          <p>{{ post.content }}</p>
+          <small>By {{ post.author.username }} on {{ post.date_posted.date() }}</small>
+        </div>
+      {% endfor %}
+    </div>
+  {% endblock %}

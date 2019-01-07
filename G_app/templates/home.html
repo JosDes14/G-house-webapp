@@ -33,15 +33,62 @@
         </div>
       </div>
     </div> -->
+    <!--<form action="{{ url_for('home') }}" method="POST">
+      <label class="radio-inline">
+        <input type="radio" name="status" value="Home" {{ "checked" if current_user.status == "Home" else ""}}>Home
+      </label>
+      <label class="radio-inline">
+        <input type="radio" name="status" value="Out" {{ "checked" if current_user.status == "Out" else ""}}>Out
+      </label>
+      <label class="radio-inline">
+        <input type="radio" name="status" value="Sleeping" {{ "checked" if current_user.status == "Sleeping" else ""}}>Sleeping
+      </label>
+      <input type="submit" name="submit" class="btn btn-outline-success">
+    </form>-->
     {% if current_user.is_authenticated %}
-      <div class="row" style="margin-top:10px">
-        <div class="col-9">
-          <h2>House Updates</h2>
+    <!--  <div class="row" style="margin-top:10px">
+        <div class="col-10">
+          <div class="row">
+            <div class="col-6">
+              <h2>House Updates</h2>
+            </div>
+            <div class="col-6">
+
+            </div>
+          </div>
         </div>
-        <div class="col-3 text-right">
-          <!--<input class="btn btn-primary" type="submit" value="Create Post">-->
+        <div class="col-2 text-right">
           <a href="https://www.pornhub.com/view_video.php?viewkey=1043149990"><small>Click me!</small></a>
         </div>
+      </div>-->
+      <div class="row" style="margin-top:10px">
+        <h3 class="ml-3">Posts</h3>
+        <div class="btn-group ml-auto">
+          <a href="{{ url_for('new_post', post_type='mess') }}" class="btn btn-outline-danger">Mess</a>
+          <a href="{{ url_for('new_post', post_type='shitty_action') }}" class="btn btn-outline-warning">Punish</a>
+          <a href="{{ url_for('new_post', post_type='general') }}" class="btn btn-outline-info">General</a>
+          <a href="{{ url_for('new_post', post_type='request') }}" class="btn btn-outline-success">Request</a>
+          <a href="#" class="btn btn-outline-primary">Challenge</a>
+          <a href="#" class="btn btn-outline-secondary">Bet</a>
+        </div>
+        <!--<div class="col-sm-2">
+          <small>Select post type:</small>
+        </div>
+        <div class="col-sm-2">
+          <a href="{{ url_for('new_post', post_type='mess') }}" class="btn btn-outline-danger">Mess</a>
+        </div>
+        <div class="col-sm-2">
+          <a href="{{ url_for('new_post', post_type='shitty_action') }}" class="btn btn-outline-warning">Punish</a>
+        </div>
+        <div class="col-sm-2">
+          <a href="{{ url_for('new_post', post_type='general') }}" class="btn btn-outline-info">General</a>
+        </div>
+        <div class="col-sm-2">
+          <a href="{{ url_for('new_post', post_type='request') }}" class="btn btn-outline-success">Request</a>
+        </div>
+        <div class="col-sm-2">
+          <a href="#" class="btn btn-outline-primary">Challenge</a>
+        </div>-->
       </div>
       <hr>
     {% else %}
