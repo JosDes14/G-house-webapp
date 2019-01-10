@@ -1,96 +1,88 @@
 {% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/post_rate.js') }}"></script>
+  {% endblock %}
+
+
   {% block home_active %}
     "nav-item active"
   {% endblock %}
 
   {% block content %}
-  <!--  <div class="row">
-      <div class="col-12">
-        <h1 class="text-center">Welcome to the Goat-Network</h1>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-8">
-        {% for member in members %}
-          <div class="jumbotron">
-            <div class="row">
-              <div class="col-3">
-                PROFILE PIC
-              </div>
-              <div class="col-9">
-                <h3>{{ member.name }}</h3>
-                <p>Josti-bucks: {{ member.bucks }}</p>
-                <p>Task: {{ member.task }}</p>
-                <p>Home: {{ member.home }}</p>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-      <div class="col-4">
-        <div class="jumbotron">
-          <h3>Chug Chart</h3>
-        </div>
-      </div>
-    </div> -->
-    <!--<form action="{{ url_for('home') }}" method="POST">
-      <label class="radio-inline">
-        <input type="radio" name="status" value="Home" {{ "checked" if current_user.status == "Home" else ""}}>Home
-      </label>
-      <label class="radio-inline">
-        <input type="radio" name="status" value="Out" {{ "checked" if current_user.status == "Out" else ""}}>Out
-      </label>
-      <label class="radio-inline">
-        <input type="radio" name="status" value="Sleeping" {{ "checked" if current_user.status == "Sleeping" else ""}}>Sleeping
-      </label>
-      <input type="submit" name="submit" class="btn btn-outline-success">
-    </form>-->
     {% if current_user.is_authenticated %}
-    <!--  <div class="row" style="margin-top:10px">
-        <div class="col-10">
-          <div class="row">
-            <div class="col-6">
-              <h2>House Updates</h2>
-            </div>
-            <div class="col-6">
 
-            </div>
-          </div>
-        </div>
-        <div class="col-2 text-right">
-          <a href="https://www.pornhub.com/view_video.php?viewkey=1043149990"><small>Click me!</small></a>
-        </div>
-      </div>-->
       <div class="row" style="margin-top:10px">
         <h3 class="ml-3">Posts</h3>
         <div class="btn-group ml-auto">
-          <a href="{{ url_for('new_post', post_type='mess') }}" class="btn btn-outline-danger">Mess</a>
-          <a href="{{ url_for('new_post', post_type='shitty_action') }}" class="btn btn-outline-warning">Punish</a>
-          <a href="{{ url_for('new_post', post_type='general') }}" class="btn btn-outline-info">General</a>
-          <a href="{{ url_for('new_post', post_type='request') }}" class="btn btn-outline-success">Request</a>
+          <a href="{{ url_for('new_post', post_type='Mess') }}" class="btn btn-outline-danger">Mess</a>
+          <a href="{{ url_for('new_post', post_type='Punish') }}" class="btn btn-outline-warning">Punish</a>
+          <a href="{{ url_for('new_post', post_type='General') }}" class="btn btn-outline-info">General</a>
+          <a href="{{ url_for('new_post', post_type='Request') }}" class="btn btn-outline-success">Request</a>
           <a href="#" class="btn btn-outline-primary">Challenge</a>
           <a href="#" class="btn btn-outline-secondary">Bet</a>
         </div>
-        <!--<div class="col-sm-2">
-          <small>Select post type:</small>
-        </div>
-        <div class="col-sm-2">
-          <a href="{{ url_for('new_post', post_type='mess') }}" class="btn btn-outline-danger">Mess</a>
-        </div>
-        <div class="col-sm-2">
-          <a href="{{ url_for('new_post', post_type='shitty_action') }}" class="btn btn-outline-warning">Punish</a>
-        </div>
-        <div class="col-sm-2">
-          <a href="{{ url_for('new_post', post_type='general') }}" class="btn btn-outline-info">General</a>
-        </div>
-        <div class="col-sm-2">
-          <a href="{{ url_for('new_post', post_type='request') }}" class="btn btn-outline-success">Request</a>
-        </div>
-        <div class="col-sm-2">
-          <a href="#" class="btn btn-outline-primary">Challenge</a>
-        </div>-->
       </div>
       <hr>
+      {% for post in posts %}
+        <div class="media">
+          <img class="rounded-circle account-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image) }}" alt="user_image">
+          <div class="media-body">
+            <div class="post-section">
+              <h6 id="{{ post.type }}">{{ post.type }}</h6>
+              {% if post.author == current_user %}
+                <a href="{{ url_for('edit_post', post_id = post.id) }}">
+                  <h5 class="border-bottom border-secondary" style="padding-bottom:2px">{{ post.title }}{{ " -- Target: " + post.target.username if post.target }}</h5>
+                </a>
+              {% else %}
+                <h5 class="border-bottom border-secondary" style="padding-bottom:2px">{{ post.title }}{{ " -- Target: " + post.target.username if post.target }}</h5>
+              {% endif %}
+              <p>{{ post.content }}</p>
+              {% if post.image %}
+                <img src="{{ url_for('static', filename='post_pics/' + post.image) }}" height="200">
+              {% endif %}
+              <hr>
+              {% if post.can_vote and current_user.username not in voters[post.id] and current_user.id != post.id_target %}
+                <div class="row">
+                  <div class="col-sm-3">
+                    <p id="rate{{ post.id }}">Rate severity:</p>
+                  </div>
+                  <div class="col-sm-9">
+                    <form class="rate-form" id="{{ post.id }}">
+                      <label class="radio-inline ml-2" for="1">1</label>
+                      <input type="radio" name="rating" value=1>
+                      <label class="radio-inline ml-2" for="2">2</label>
+                      <input type="radio" name="rating" value=2>
+                      <label class="radio-inline ml-2" for="3">3</label>
+                      <input type="radio" name="rating" value=3>
+                      <label class="radio-inline ml-2" for="4">4</label>
+                      <input type="radio" name="rating" value=4>
+                      <label class="radio-inline ml-2" for="5">5</label>
+                      <input type="radio" name="rating" value=5>
+                      <button type="submit" id="sbtn">Submit</button>
+                    </form>
+                  </div>
+                  <div class="vote-alert" id="{{ 'post' + post.id|string }}" style="display:none;">
+                    <p id="rating"></p>
+                  </div>
+                  <small style="margin-left:15px" id="{{ 'msg' + post.id|string }}">The current rating will be revealed once you have rated.</small>
+                </div>
+              {% elif post.can_vote %}
+                <div class="row">
+                  <div class="col-sm-3">
+                    <p>Current rating:</p>
+                  </div>
+                  <div class="col-sm-9">
+                    <p>{{ post.rating|round(2) }}/5</p>
+                  </div>
+                </div>
+              {% endif %}
+              <small>By <a href="{{ url_for('profile', username=post.author.username) }}">{{ post.author.username }}</a> on {{ post.date_posted.date() }}</small>
+            </div>
+          </div>
+        </div>
+
+      {% endfor %}
     {% else %}
       <h4 style='margin-top:10px'>Uh oh, It looks like somebody is not logged in...</h4>
       <hr>

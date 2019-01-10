@@ -13,6 +13,40 @@ body {
   width: 100%;
 }
 
+.vote-alert {
+  margin-left: 10px;
+}
+
+p#rating {
+  background-color: #7FB592;
+  padding: 2px;
+  border: 1px solid #659074;
+  border-radius: 2px;
+}
+
+h6#Punish {
+  background-color: #ffc107;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+h6#Request {
+  background-color: #28a745;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+h6#Mess {
+  background-color: #dc3545;
+  padding: 2px;
+  border-radius: 2px;
+}
+
+h6#General {
+  background-color: #17a2b8;
+  padding: 2px;
+  border-radius: 2px;
+}
 .alert {
   margin-top:1%;
 }

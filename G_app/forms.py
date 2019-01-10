@@ -45,7 +45,7 @@ class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     content = TextAreaField('Content', validators=[DataRequired()])
     picture = FileField('Upload Picture', validators=[FileAllowed(['jpg', 'png'])])
-    target = RadioField('Choose Target', choices=get_choices())
+    target = RadioField('Choose Target', choices=get_choices()) 
     submit = SubmitField('Post')
 
 

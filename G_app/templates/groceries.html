@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/update_groceries.js') }}"></script>
+  {% endblock %}
+
+
+  {% block groceries_active %}
+    "nav-item active"
+  {% endblock %}
+
+
+  {% block content %}
+    <h3 class="border-bottom">Communal Groceries</h3>
+    <table id="groceries">
+      <tr>
+        <th id="groceries">Item</th>
+        <th id="groceries">In House</th>
+      </tr>
+      {% for item in groceries %}
+        <tr>
+          <td id="groceries"><label for="{{ item.id }}">{{ item.name }}</label></td>
+          <td align="center">
+            <input type="checkbox" id="{{ item.id }}" onchange="update_groceries({{ item.id }}, '{{ item.in_house }}')" {{ "checked" if item.in_house }}>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endblock %}
