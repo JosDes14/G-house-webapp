@@ -17,7 +17,7 @@ body {
   margin-left: 10px;
 }
 
-p#rating {
+.rate-success {
   background-color: #7FB592;
   padding: 2px;
   border: 1px solid #659074;

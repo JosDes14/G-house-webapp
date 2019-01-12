@@ -2,6 +2,7 @@
 
   {% block scripts %}
     <script type="text/javascript" src="{{ url_for('static', filename='js/post_rate.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/delete_post.js') }}"></script>
   {% endblock %}
 
 
@@ -15,23 +16,23 @@
       <div class="row" style="margin-top:10px">
         <h3 class="ml-3">Posts</h3>
         <div class="btn-group ml-auto">
-          <a href="{{ url_for('new_post', post_type='Mess') }}" class="btn btn-outline-danger">Mess</a>
-          <a href="{{ url_for('new_post', post_type='Punish') }}" class="btn btn-outline-warning">Punish</a>
-          <a href="{{ url_for('new_post', post_type='General') }}" class="btn btn-outline-info">General</a>
-          <a href="{{ url_for('new_post', post_type='Request') }}" class="btn btn-outline-success">Request</a>
+          <a href="{{ url_for('posts.new_post', post_type='Mess') }}" class="btn btn-outline-danger">Mess</a>
+          <a href="{{ url_for('posts.new_post', post_type='Punish') }}" class="btn btn-outline-warning">Punish</a>
+          <a href="{{ url_for('posts.new_post', post_type='General') }}" class="btn btn-outline-info">General</a>
+          <a href="{{ url_for('posts.new_post', post_type='Request') }}" class="btn btn-outline-success">Request</a>
           <a href="#" class="btn btn-outline-primary">Challenge</a>
           <a href="#" class="btn btn-outline-secondary">Bet</a>
         </div>
       </div>
       <hr>
-      {% for post in posts %}
-        <div class="media">
+      {% for post in posts.items %}
+        <div class="media" id="{{ 'post' + post.id|string }}">
           <img class="rounded-circle account-img" src="{{ url_for('static', filename='profile_pics/' + post.author.image) }}" alt="user_image">
           <div class="media-body">
             <div class="post-section">
               <h6 id="{{ post.type }}">{{ post.type }}</h6>
               {% if post.author == current_user %}
-                <a href="{{ url_for('edit_post', post_id = post.id) }}">
+                <a href="{{ url_for('posts.edit_post', post_id = post.id) }}">
                   <h5 class="border-bottom border-secondary" style="padding-bottom:2px">{{ post.title }}{{ " -- Target: " + post.target.username if post.target }}</h5>
                 </a>
               {% else %}
@@ -50,20 +51,20 @@
                   <div class="col-sm-9">
                     <form class="rate-form" id="{{ post.id }}">
                       <label class="radio-inline ml-2" for="1">1</label>
-                      <input type="radio" name="rating" value=1>
+                      <input type="radio" name="{{ 'rating' + post.id|string }}" value=1>
                       <label class="radio-inline ml-2" for="2">2</label>
-                      <input type="radio" name="rating" value=2>
+                      <input type="radio" name="{{ 'rating' + post.id|string }}" value=2>
                       <label class="radio-inline ml-2" for="3">3</label>
-                      <input type="radio" name="rating" value=3>
+                      <input type="radio" name="{{ 'rating' + post.id|string }}" value=3>
                       <label class="radio-inline ml-2" for="4">4</label>
-                      <input type="radio" name="rating" value=4>
+                      <input type="radio" name="{{ 'rating' + post.id|string }}" value=4>
                       <label class="radio-inline ml-2" for="5">5</label>
-                      <input type="radio" name="rating" value=5>
+                      <input type="radio" name="{{ 'rating' + post.id|string }}" value=5>
                       <button type="submit" id="sbtn">Submit</button>
                     </form>
                   </div>
-                  <div class="vote-alert" id="{{ 'post' + post.id|string }}" style="display:none;">
-                    <p id="rating"></p>
+                  <div class="vote-alert" id="{{ 'alert' + post.id|string }}" style="display:none;">
+                    <p class="rate-success" id="{{ 'rating' + post.id|string }}"></p>
                   </div>
                   <small style="margin-left:15px" id="{{ 'msg' + post.id|string }}">The current rating will be revealed once you have rated.</small>
                 </div>
@@ -77,12 +78,51 @@
                   </div>
                 </div>
               {% endif %}
-              <small>By <a href="{{ url_for('profile', username=post.author.username) }}">{{ post.author.username }}</a> on {{ post.date_posted.date() }}</small>
+              <div class="row">
+                <small class="ml-3 pt-2">By <a href="{{ url_for('users.profile', username=post.author.username) }}">{{ post.author.username }}</a> on {{ post.date_posted.date() }}</small>
+                {% if post.author == current_user %}
+                  <button type="button" id="{{ post.id }}" class="delbtn btn btn-outline-danger ml-auto mr-3">Delete</button>
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
-
       {% endfor %}
+      <div class="modal fade" id="deleteModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+
+            <div class="modal-header">
+              <h5>Are you sure?</h5>
+            </div>
+
+            <div class="modal-body">
+              Deleting this post cannot be undone. Please make an informed decision!
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-primary" id="closeModal">Close</button>
+              <button type="button" class="deletePost btn btn-danger" id="">Delete</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="row mt-2 mb-2">
+        <div class="col-12" align="center">
+          {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% if page_num %}
+              {% if posts.page == page_num %}
+                <a class="btn btn-secondary ml-1 mr-1" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+              {% else %}
+                <a class="btn btn-outline-secondary ml-1 mr-1" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+              {% endif %}
+            {% else %}
+              ...
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
     {% else %}
       <h4 style='margin-top:10px'>Uh oh, It looks like somebody is not logged in...</h4>
       <hr>

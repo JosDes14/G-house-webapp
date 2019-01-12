@@ -8,7 +8,7 @@ function update_groceries(id, prevInHouse){
     },
     success: function(data){
       //alert(data.message);
-      alert(data.message);
+      //alert(data.message);
     },
     error: function(error){
       alert(error);

@@ -1,5 +1,6 @@
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from datetime import datetime
-from G_app import db, login_manager
+from G_app import db, login_manager, app
 from flask_login import UserMixin
 
 
@@ -28,6 +29,18 @@ class User(db.Model, UserMixin):
     challenges_made =  db.relationship('Challenge', backref='challenger', lazy=True, foreign_keys='Challenge.id_challenger')
     challenges_received =  db.relationship('Challenge', backref='challengee', lazy=True, foreign_keys='Challenge.id_challengee')
 
+    def get_reset_token(self, expires_sec=1800):
+        s = Serializer(app.config['SECRET_KEY'], expires_sec)
+        return s.dumps({'user_id' : self.id}).decode('utf-8')
+
+    @staticmethod
+    def verify_reset_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            user_id = s.loads(token)['user_id']
+        except :
+            return None
+        return User.query.get(user_id)
 
     def __repr__(self):
         return "User({}, {}, {}, {}, {})".format(self.username, self.email, self.status, self.bucks, self.task)
@@ -105,8 +118,27 @@ class Challenge(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=False)
     win_claim = db.Column(db.Boolean)
     won = db.Column(db.Boolean)
+    amount = db.Column(db.Integer, nullable=False)
     id_challenger = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     id_challengee = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
         return "Challenge({} |  by {} to {})".format(self.title, self.id_challenger, self.id_challengee)
+
+
+class Bet(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(300))
+    accepted_by_bookmaker = db.Column(db.Boolean, nullable=False, default=True)
+    accepted_by_bettaker = db.Column(db.Boolean, nullable=False, default=False)
+    active = db.Column(db.Boolean, nullable=False, default=False)
+    win_claim = db.Column(db.Boolean)
+    won = db.Column(db.Boolean)
+    amount = db.Column(db.Integer, nullable=False)
+    odds = db.Column(db.Integer, nullable=False)
+    id_bookmaker = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    id_bettaker= db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return "Bet({} | Bookmaker: {} - Taker: {})".format(self.title, self.id_bookmaker, self.id_bettaker)
