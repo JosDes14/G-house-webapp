@@ -22,18 +22,8 @@ The Goathouse team'''
 
 
 def member_ls():
-    members = []
-    users = User.query.all()
-    for user in users:
-        if user.username != 'admin':
-            user_dict = {
-                'username': user.username,
-                'name': user.name,
-                'task': user.task,
-                'bucks': user.bucks,
-                'status': user.status
-            }
-            members.append(user_dict)
+    members = User.query.all()
+    members.pop(5)
     return members
 
 

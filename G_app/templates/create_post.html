@@ -40,7 +40,7 @@
             {% endfor %}
           {% endif %}
         </div>
-        {% if post_type in ['Mess', 'Punish', 'Request'] %}
+        {% if post_type in ['Mess', 'Punish'] %}
           <div class="form-group">
             {{ form.target.label() }}
             {{ form.target() }}

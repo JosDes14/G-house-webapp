@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+  {% block content %}
+    {% if show_form %}
+      <form method="POST" action="" enctype="multipart/form-data" role="form" novalidate>
+        {{ form.hidden_tag() }} <!-- In combination with hidden key, prevents certain attacks... -->
+        <fieldset class="form-group">
+          <div class="row">
+            <div class="col-4">
+              <legend>Rating time!</legend>
+            </div>
+            <div class="col-8" style="text-align:right">
+              <small>Note that each rating must be out of 10 and an integer number.</small>
+            </div>
+          </div>
+          {% for voting_form in form.voting_fields %}
+            {{ voting_form.form.hidden_tag() }}
+            <div class="voting-section">
+              <h6>{{ vote_names[loop.index - 1] }}</h6>
+              <div class="form-group">
+                {{ voting_form.form.rating.label(class="form-control-label") }}
+                {% if voting_form.form.rating.errors %}
+                    {{ voting_form.form.rating(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in voting_form.form.rating.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ voting_form.form.rating(class="form-control form-control-lg") }}
+                {% endif %}
+              </div>
+              <div class="form-group">
+                {{ voting_form.form.clarification.label(class="form-control-label") }}
+                {{ voting_form.form.clarification(class="form-control form-control-lg") }}
+              </div>
+            </div>
+          {% endfor %}
+          <!---->
+        </fieldset>
+        <div class="form-group">
+          {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+      </form>
+    {% else %}
+      <h3>The Results:</h3>
+      {% for vote in last_votes %}
+        <div class="voting-section">
+          <h5>{{ loop.index }}. {{ vote.subject.username }}</h5>
+          <h6><b>Rating:</b> {{ vote.rating }}</h6>
+          <h6>Task: {{ vote.task }}</h6><br>
+          {% if vote.description != '' %}
+            <h6>Clarification:</h6>
+            {% for line in vote.description.splitlines() %}
+              <p>{{ line }}</p><br>
+            {% endfor %}
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endblock %}

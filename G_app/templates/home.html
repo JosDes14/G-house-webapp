@@ -20,7 +20,7 @@
           <a href="{{ url_for('posts.new_post', post_type='Punish') }}" class="btn btn-outline-warning">Punish</a>
           <a href="{{ url_for('posts.new_post', post_type='General') }}" class="btn btn-outline-info">General</a>
           <a href="{{ url_for('posts.new_post', post_type='Request') }}" class="btn btn-outline-success">Request</a>
-          <a href="#" class="btn btn-outline-primary">Challenge</a>
+          <a href="{{ url_for('posts.new_challenge') }}" class="btn btn-outline-primary">Challenge</a>
           <a href="#" class="btn btn-outline-secondary">Bet</a>
         </div>
       </div>
@@ -38,7 +38,11 @@
               {% else %}
                 <h5 class="border-bottom border-secondary" style="padding-bottom:2px">{{ post.title }}{{ " -- Target: " + post.target.username if post.target }}</h5>
               {% endif %}
-              <p>{{ post.content }}</p>
+              <p>
+              {% for line in post.content.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
               {% if post.image %}
                 <img src="{{ url_for('static', filename='post_pics/' + post.image) }}" height="200">
               {% endif %}
@@ -68,10 +72,10 @@
                   </div>
                   <small style="margin-left:15px" id="{{ 'msg' + post.id|string }}">The current rating will be revealed once you have rated.</small>
                 </div>
-              {% elif post.can_vote %}
+              {% elif post.rating %}
                 <div class="row">
                   <div class="col-sm-3">
-                    <p>Current rating:</p>
+                    <p>Rating:</p>
                   </div>
                   <div class="col-sm-9">
                     <p>{{ post.rating|round(2) }}/5</p>

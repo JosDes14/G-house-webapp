@@ -1,0 +1,5 @@
+from flask import url_for
+
+VOTING_WEEKDAY = 3
+DEADLINE_HOURS = 20
+DEADLINE_MINS = 30

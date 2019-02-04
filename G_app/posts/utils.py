@@ -1,24 +1,28 @@
 import os
 import random
 import string
+import sys
 from PIL import Image
-from G_app.models import User, Post, Chug
-from flask import app
+from G_app.models import User, Post, Chug, Notification
+from flask import app, url_for
+from flask_login import current_user
+from G_app import db
+from datetime import datetime
 
 def member_ls():
-    members = []
+    members = User.query.all()
+    members.pop(5)
+    return members
+
+
+def get_choices():
+    choices = []
     users = User.query.all()
     for user in users:
-        if user.username != 'admin':
-            user_dict = {
-                'username': user.username,
-                'name': user.name,
-                'task': user.task,
-                'bucks': user.bucks,
-                'status': user.status
-            }
-            members.append(user_dict)
-    return members
+        username = user.username
+        if username != 'admin':
+            choices.append((username, username))
+    return choices
 
 
 def chug_matrix():
@@ -40,7 +44,7 @@ def random_filename(n):
 
 
 def save_picture(form_picture, relative_path, width, height):
-    random_hex = random_filename(30)
+    random_hex = random_filename(15)
     _, file_ext = os.path.splitext(form_picture.filename)
     filename = random_hex + file_ext
     path = os.path.join(app.root_path, relative_path, filename)
@@ -71,3 +75,106 @@ def voter_dict():
 def number_voted(post_id):
     voters = voter_dict()
     return len(voters[post_id])
+
+
+def create_challenge_post(challenge):
+    title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
+    content = """Title: {}
+Description: {}
+Amount: {}.00₲""".format(challenge.title, challenge.description, challenge.amount)
+    type = "Challenge"
+    id_user = 6 #admin
+    post = Post(title=title, content=content, type=type, id_user=id_user)
+    db.session.add(post)
+    db.session.commit()
+
+
+def modify_challenge_post(challenge):
+    title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
+    post = Post.query.filter_by(title=title).first()
+    if challenge.accepted_by_challenger:
+        modifier = challenge.challenger
+    else:
+        modifier = challenge.challengee
+    content = """Title: {}
+Description: {}
+Amount: {}.00₲
+({} has modified the challenge)""".format(challenge.title, challenge.description, challenge.amount, modifier.username)
+    post.content = content
+    post.date_posted = datetime.utcnow()
+    db.session.commit()
+
+
+def accept_challenge_post(challenge):
+    title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
+    post = Post.query.filter_by(title=title).first()
+    content = """Title: {}
+Description: {}
+Amount: {}.00₲
+THIS CHALLENGE HAS BEEN ACCEPTED AND IS ACTIVE""".format(challenge.title, challenge.description, challenge.amount)
+    post.content = content
+    post.date_posted = datetime.utcnow()
+    db.session.commit()
+
+
+def new_challenge_notification(challenge):
+    title = "NEW CHALLENGE"
+    content = "{} has issued a challenge to you!".format(challenge.challenger.username)
+    link = url_for('posts.edit_challenge', challenge_id = challenge.id)
+    challenge.challengee.notification(title=title, content=content, link=link)
+
+
+def modify_challenge_notification(challenge):
+    title = "MODIFY CHALLENGE"
+    if challenge.accepted_by_challenger:
+        modifier = challenge.challenger
+        accepter = challenge.challengee
+    else:
+        modifier = challenge.challengee
+        accepter = challenge.challenger
+    content = "{} has modified the challenge!".format(modifier.username)
+    link = url_for('posts.edit_challenge', challenge_id = challenge.id)
+    accepter.notification(title=title, content=content, link=link)
+
+
+def accept_challenge_notification(challenge):
+    title = "ACCEPT CHALLENGE"
+    content = "The challenge: '{}' has been accepted!".format(challenge.title)
+    link = "#"
+    users = User.query.all()
+    users.pop(5)
+    for user in users:
+        user.notification(title=title, content=content, link=link)
+
+
+
+def create_post_notifications(post):
+    if post.type != 'General':
+        users = User.query.all()
+        for user in users:
+            if post.type == 'Request':
+                content = "{} has made a request post. Please rate to see if he really deserves that ₲₲₲..."
+            else:
+                content = "{} is the target of a {} post. HAHAHA, please rate!"
+            if user != post.target:
+                if post.type == 'Request':
+                    content = content.format(post.target.username)
+                else:
+                    content = content.format(post.target.username, post.type)
+            else:
+                if post.type == 'Request':
+                    content = "You thought this was a legit notification; it isn't! But let's hope your request goes down well with the other goats..."
+                else:
+                    content = "You are the target of a {} post! Uh oh...".format(post.type)
+            title = post.id
+            user_id = user.id
+            notification = Notification(title=title, content=content, user_id=user_id)
+            db.session.add(notification)
+            db.session.commit()
+
+
+def delete_post_notifications(post):
+    notifications = Notification.query.filter_by(title=str(post.id))
+    for notification in notifications:
+        db.session.delete(notification)
+        db.session.commit()

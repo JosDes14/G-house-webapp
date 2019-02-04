@@ -1,4 +1,4 @@
-from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
+from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, jsonify
 from G_app.users.forms import LoginForm, UpdateForm, RequestResetForm, ResetPasswordForm
 from G_app.models import User, Post, Chug, Groceries
 from G_app import db, bcrypt, mail
@@ -101,6 +101,14 @@ def reset_token(token):
         flash("Your password has been updated!", 'success')
         return redirect('login')
     return render_template('reset_token.html', chug=chug, members=members, form=form)
+
+
+
+@users.route("/current_user_id")
+@login_required
+def current_user_id():
+    return jsonify({'id':current_user.id})
+
 
 
 @users.route("/update_status/id/<user_id>", methods=['POST'])

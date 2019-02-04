@@ -1,19 +1,10 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SubmitField, TextAreaField, RadioField
+from wtforms import StringField, SubmitField, TextAreaField, RadioField, IntegerField
 from wtforms.validators import DataRequired
-from flask_login import current_user
 from G_app.models import User
+from G_app.posts.utils import get_choices
 
-
-def get_choices():
-    choices = []
-    users = User.query.all()
-    for user in users:
-        username = user.username
-        if username != 'admin':
-            choices.append((username, username))
-    return choices
 
 
 class PostForm(FlaskForm):
@@ -29,3 +20,17 @@ class PostFormGeneral(FlaskForm):
     content = TextAreaField('Content', validators=[DataRequired()])
     picture = FileField('Upload Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Post')
+
+
+class ChallengeForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    description = TextAreaField('Description', validators=[DataRequired()])
+    amount = IntegerField('Amount', validators=[DataRequired()])
+    target = RadioField('Choose Target', choices=get_choices())
+    submit = SubmitField('Challenge')
+
+
+class EditChallengeForm(FlaskForm):
+    description = TextAreaField('Edit description', validators=[DataRequired()])
+    amount = IntegerField('Edit Amount', validators=[DataRequired()])
+    submit = SubmitField('Accept')

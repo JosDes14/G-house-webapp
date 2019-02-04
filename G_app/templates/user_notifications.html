@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+  {% block content %}
+    <h3 class="border-bottom" style="padding-bottom:2px">All your notifications</h3>
+    {% for notification in notifications %}
+      <div class="row">
+        <div class="col-12">
+          <div class="notification-section">
+            <p>{{ notification.content }}</p>
+            <small>Date: {{ notification.timestamp }}</small>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% endblock %}
