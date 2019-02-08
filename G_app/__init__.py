@@ -6,15 +6,6 @@ from flask_mail import Mail
 from G_app.config import Config
 from flask_apscheduler import APScheduler
 
-'''
-flask
-flask-wtf
-flask-sqlalchemy
-flask-login
-flask-bcrypt
-flask-mail
-Pillow
-'''
 
 app = Flask(__name__)
 

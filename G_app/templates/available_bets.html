@@ -11,7 +11,7 @@
       <div class="bet-section mt-2" id="{{ bet.id }}">
         <div class="row">
           <div class="col-9 divider-right">
-            <h5 class="border-bottom border-secondary">{{ bet.title }}</h5>
+            <h5 class="border-bottom border-secondary pb-1">{{ bet.title }}</h5>
             <p>
               {% for line in bet.description.splitlines() %}
                 {{ line }}<br>

@@ -160,6 +160,8 @@ def available_bets():
         user = User.query.get(user_id)
         bet = Bet.query.get(bet_id)
         bet.bettaker = user
+        accept_bet_notification(bet)
+        accept_bet_post(bet, was_public=True)
         db.session.commit()
         return jsonify({ 'user' : user.username, 'bet' : bet.title })
     return render_template('available_bets.html', bets=bets)

@@ -152,6 +152,19 @@ def your_notifications(user_id):
     return render_template('user_notifications.html', notifications=all_notifications)
 
 
+@main.route("/recent_notifications")
+@login_required
+def recent_notifications():
+    notifications = current_user.last_notifications(5)
+    return jsonify([{
+        'id' : n.id,
+        'title' : n.title,
+        'content' : n.content,
+        'link' : n.link,
+        'timestamp' : n.timestamp,
+        'seen' : n.seen
+    } for n in notifications])
+
 
 @main.route("/new_notifications")
 @login_required

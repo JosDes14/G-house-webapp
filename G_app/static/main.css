@@ -74,6 +74,10 @@ h6#Bet {
   border-radius: 2px;
 }
 
+.notification#unseen {
+  background-color: rgb(100, 151, 177);
+}
+
 .header-link {
 }
 

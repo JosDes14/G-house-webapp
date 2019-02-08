@@ -96,6 +96,10 @@ Odds: {}{}""".format(bet.title, bet.description, bet.amount, bet.odds, optional)
     db.session.commit()
 
 
+def accept_bet_post(bet, was_public=False):
+    print("accept bet post", file=sys.stdout)
+
+
 def create_challenge_post(challenge):
     title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
     content = """Title: {}
@@ -162,6 +166,10 @@ def create_bet_notification(bet):
         content = "{} has issued a bet to you.".format(bet.bookmaker.username)
         link = "#"
         bet.bettaker.notification(title=title, content=content, link=link)
+
+
+def accept_bet_notification(bet, was_public=False):
+    print("accept bet notification", file=sys.stdout)
 
 
 def new_challenge_notification(challenge):
