@@ -37,6 +37,7 @@ app.config['MAIL_USERNAME'] = 'goathouse.pwdreset@gmail.com'
 app.config['MAIL_PASSWORD'] = 'G0@thouse-r3s3tt3r'
 mail = Mail(app)
 
+app.jinja_env.add_extension('jinja2.ext.do')
 
 from G_app.users.routes import users
 app.register_blueprint(users)

@@ -1,13 +1,17 @@
 from G_app import db
-from G_app.models import User, Groceries
+from G_app.models import User, Groceries, Post, Challenge
 
-#old_posts = Posts.query.all()
+old_posts = Post.query.all()
+old_challenges = Challenge.query.all()
 
 db.drop_all()
 db.create_all()
 
-#for post in old_posts:
-    #db.session.add(post)
+for post in old_posts:
+    db.session.add(post)
+
+for challenge in old_challenges:
+    db.session.add(challenge)
 
 groceries = ['Cheese', 'Milk', 'Eggs', 'Toast Bread', 'Brown Bread', 'Rice',
             'Fruit', 'Tomatoes', 'Onions', 'Garlic', 'Cooking Oil', 'Toilet Paper',

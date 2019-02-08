@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/accept_bet.js') }}"></script>
+  {% endblock %}
+
+  {% block content %}
+    <h3 class="border-bottom border-secondary mb-3 mt-1">Available bets</h3>
+    {% for bet in bets %}
+      {% set to_win = '%0.2f'|format(bet.odds*bet.amount|float) %}
+      <div class="bet-section mt-2" id="{{ bet.id }}">
+        <div class="row">
+          <div class="col-9 divider-right">
+            <h5 class="border-bottom border-secondary">{{ bet.title }}</h5>
+            <p>
+              {% for line in bet.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+            </p>
+            <div class="row">
+              <div class="col-md-4">
+                <strong>Odds:</strong>
+                {{ bet.odds }}
+              </div>
+              <div class="col-md-4">
+                <strong>Amount:</strong>
+                {{ bet.amount }}.00 ₲
+              </div>
+              <div class="col-md-4">
+                <strong>To win:</strong>
+                {{ to_win }} ₲
+              </div>
+            </div>
+          </div>
+          <div class="col-3 my-auto" align="center">
+            <button type="button" class="btn btn-outline-success" onclick="openModal({{ bet.id }}, {{ current_user.id }})">Accept</button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    <div class="modal fade acceptModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5>Are you sure?</h5>
+          </div>
+
+          <div class="modal-body">
+            Are you certain you want to accept this bet? It cannot be undone.
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" onclick="closeModal()">Close</button>
+            <button type="button" class="acceptBet btn btn-success">Accept</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  {% endblock %}

@@ -1,6 +1,9 @@
+import sys
+import json
 from flask import render_template, url_for, flash, redirect, request, jsonify, abort, Blueprint
-from G_app.posts.forms import PostForm, PostFormGeneral, ChallengeForm, EditChallengeForm
-from G_app.models import User, Post, Challenge
+from wtforms import RadioField
+from G_app.posts.forms import PostForm, PostFormGeneral, ChallengeForm, EditChallengeForm, BetForm
+from G_app.models import User, Post, Challenge, Bet
 from G_app import db, scheduler
 from flask_login import current_user, login_required
 from G_app.posts.utils import *
@@ -16,6 +19,12 @@ def add_post():
 '''
 #scheduler.add_job(func=add_post, trigger='date', run_date=datetime(2019,1,16,0,34,30), id='test')
 
+
+@posts.context_processor
+def context_processor():
+    chug = chug_matrix()
+    members=member_ls()
+    return dict(chug=chug, members=members)
 
 
 @posts.route("/post_rating", methods=['POST'])
@@ -50,8 +59,6 @@ def delete_post():
 @posts.route("/edit/post/id/<post_id>", methods=['GET','POST'])
 @login_required
 def edit_post(post_id):
-    chug = chug_matrix()
-    members = member_ls()
     post = Post.query.get_or_404(post_id)
     if post.author != current_user:
         abort(403)
@@ -76,16 +83,15 @@ def edit_post(post_id):
         form.content.data = post.content
         if post.type != "General":
             form.target.data = post.target.username
-    return render_template('update_post.html', form=form, members=members, chug=chug, post_type=post.type)
+    return render_template('update_post.html', form=form, post_type=post.type)
 
 
 
 @posts.route("/new/post/<post_type>", methods=['GET', 'POST'])
 @login_required
 def new_post(post_type):
-    chug = chug_matrix()
-    members = member_ls()
     if not post_type in ['General', 'Request']:
+        setattr(PostForm, 'target', RadioField('Choose Target', choices=get_choices()))
         form = PostForm()
     else:
         form = PostFormGeneral()
@@ -113,15 +119,83 @@ def new_post(post_type):
     #if form.validate_on_submit():
         #flash("Your post has been created!", 'success')
         #return redirect(url_for('main.home'))
-    return render_template('create_post.html', form=form, chug=chug, members=members, post_type=post_type)
+    return render_template('create_post.html', form=form, post_type=post_type)
+
+
+
+@posts.route("/new/bet", methods=['GET', 'POST'])
+@login_required
+def new_bet():
+    choices = get_choices()
+    choices.append(('anyone', 'Anyone'))
+    setattr(BetForm, 'target', RadioField('Choose Target', choices=choices))
+    form = BetForm()
+    if form.validate_on_submit():
+        if form.target.data != 'anyone':
+            target_id = User.query.filter_by(username=form.target.data).first().id
+        else:
+            target_id = None
+        title = form.title.data
+        description = form.description.data
+        amount = form.amount.data
+        odds = form.odds.data
+        bet = Bet(title=title, description=description, amount=amount, odds=odds, id_bookmaker=current_user.id, id_bettaker=target_id)
+        db.session.add(bet)
+        db.session.commit()
+        create_bet_post(bet)
+        create_bet_notification(bet)
+        flash("Successfully created bet", 'success')
+        return redirect(url_for('main.home'))
+    return render_template('new_bet.html', form=form)
+
+
+
+@posts.route("/available_bets", methods=['GET','POST'])
+@login_required
+def available_bets():
+    bets = Bet.query.filter(Bet.bettaker==None, Bet.bookmaker!=current_user).all()
+    if request.method == 'POST':
+        user_id = request.form.get('user_id')
+        bet_id = request.form.get('bet_id')
+        user = User.query.get(user_id)
+        bet = Bet.query.get(bet_id)
+        bet.bettaker = user
+        db.session.commit()
+        return jsonify({ 'user' : user.username, 'bet' : bet.title })
+    return render_template('available_bets.html', bets=bets)
+
+
+
+@posts.route("/challenge/id/<int:challenge_id>")
+def challenge(challenge_id):
+    challenge = Challenge.query.get_or_404(challenge_id)
+    return render_template("challenge.html", challenge=challenge)
+
+
+
+@posts.route("/all_challenges")
+@login_required
+def all_challenges():
+    page = request.args.get('page', 1, type=int)
+    challenges = Challenge.query.order_by(Challenge.date.desc()).paginate(page=page, per_page=10)
+    return render_template('all_challenges.html', challenges=challenges)
+
+
+
+@posts.route("/my_challenges")
+@posts.route("/my_challenges/page_m=<int:page_m>/page_r=<int:page_r>")
+@login_required
+def my_challenges(page_m=1, page_r=1):
+    challenges_made = Challenge.query.filter_by(id_challenger=current_user.id).order_by(Challenge.date.desc()).paginate(page=page_m, per_page=5)
+    challenges_received = Challenge.query.filter_by(id_challengee=current_user.id).order_by(Challenge.date.desc()).paginate(page=page_r, per_page=5)
+    challenges_pending, challenges_active = pending_active_challenges(current_user.challenges_made + current_user.challenges_received)
+    return render_template('my_challenges.html', challenges_pending=challenges_pending, challenges_made=challenges_made, challenges_received=challenges_received, challenges_active=challenges_active)
 
 
 
 @posts.route("/edit/challenge/id/<challenge_id>", methods=['GET', 'POST'])
 @login_required
 def edit_challenge(challenge_id):
-    chug = chug_matrix()
-    members = member_ls()
     challenge = Challenge.query.get(int(challenge_id))
     if challenge.accepted_by_challenger and challenge.accepted_by_challengee or\
     current_user not in {challenge.challengee, challenge.challenger} or\
@@ -155,15 +229,37 @@ def edit_challenge(challenge_id):
     elif request.method == 'GET':
         form.description.data = challenge.description
         form.amount.data = challenge.amount
-    return render_template('edit_challenge.html',form=form, challenge=challenge, chug=chug, members=members)
+    return render_template('edit_challenge.html',form=form, challenge=challenge)
+
+
+
+@posts.route("/challenge_completed", methods=['POST'])
+@login_required
+def challenge_completed():
+    challenge_id = json.loads(request.form.get('challenge_id'))
+    is_verification = json.loads(request.form.get('is_verification'))
+    completed = json.loads(request.form.get('completed'))
+    challenge = Challenge.query.get_or_404(int(challenge_id))
+    if is_verification:
+        challenge.won = completed
+        challenge.active = False #dont need to commit db because db.session.commit() is called in transfer method
+        finish_challenge_notification(challenge)
+        finish_challenge_post(challenge)
+        if completed:
+            challenge.challenger.transfer(recipient=challenge.challengee, amount=challenge.amount, title="Challenge transfer")
+    else:
+        challenge.win_claim = True #dont need to commit db because db.session.commit() is called in notification method
+        content = "{} claims to have won the challenge '{}'".format(challenge.challengee.username, challenge.title)
+        link = url_for('posts.my_challenges')
+        challenge.challenger.notification(title="CHALLENGE WIN CLAIM", content=content, link=link)
+    return jsonify({ 'content' : 'success' })
 
 
 
 @posts.route("/new/challenge", methods=['GET', 'POST'])
 @login_required
 def new_challenge():
-    chug = chug_matrix()
-    members = member_ls()
+    setattr(ChallengeForm, 'target', RadioField('Choose Target', choices=get_choices()))
     form = ChallengeForm()
     if form.validate_on_submit():
         id_challengee = User.query.filter_by(username=form.target.data).first().id
@@ -173,4 +269,4 @@ def new_challenge():
         create_challenge_post(challenge)
         new_challenge_notification(challenge)
         return redirect(url_for('main.home'))
-    return render_template('challenge.html', chug=chug, members=members, form=form)
+    return render_template('new_challenge.html', form=form)

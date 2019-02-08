@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/challenge_complete.js') }}"></script>
+  {% endblock %}
+
+  {% block content %}
+    {% if challenges_active %}
+      <h3 class="mt-1">Active challenges</h3>
+      {% for challenge in challenges_active %}
+        <div class="challenge-section {{ 'challenge' + challenge.id|string }}" id="green">
+          <div class="row">
+            <div class="col-9 divider-right">
+                <h5>{{ challenge.title }} | for {{ challenge.amount }}.00 ₲</h5>
+                <p>
+                {% for line in challenge.description.splitlines() %}
+                  {{ line }}<br>
+                {% endfor %}
+                </p>
+            </div>
+            <div class="col-3 my-auto" align="center">
+              {% if not challenge.win_claim %}
+                {% if current_user == challenge.challengee %}
+                  <div id="{{ 'completeMsg' + challenge.id|string }}" style="display:none;">
+                    <p class="success">Let's hope your claim is accepted!</p>
+                  </div>
+                  <button type="button" class="completeBtn btn btn-outline-light" id="{{ challenge.id }}">Completed?</button>
+                {% elif current_user == challenge.challenger %}
+                  <p>Waiting for challenge to be completed...</p>
+                {% endif %}
+              {% else %}
+                {% if current_user == challenge.challengee %}
+                  <p>Waiting for challenger to verify your claim...</p>
+                {% elif current_user == challenge.challenger %}
+                  <button type="button" class="verifyBtn btn btn-outline-light" onclick="verifyChallenge({{ challenge.id }}, '{{ challenge.challengee.username }}')">Verify</button>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+    <hr>
+    {% if challenges_pending %}
+      <h3 class="mt-3">Challenges pending</h3>
+      {% for challenge in challenges_pending %}
+        {% if current_user == challenge.challenger %}
+          {% set color = 'blue' %}
+        {% else %}
+          {% set color = 'pink' %}
+        {% endif %}
+        <div class="challenge-section" id="{{ color }}">
+          <div class="row">
+            <div class="col-9 divider-right">
+              <h5>{{ challenge.title }} | for {{ challenge.amount }}.00 ₲</h5>
+              <p>
+              {% for line in challenge.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
+            </div>
+            <div class="col-3 my-auto" align="center">
+              {% if ( (current_user == challenge.challenger and challenge.accepted_by_challenger) or
+                      (current_user == challenge.challengee and challenge.accepted_by_challengee) )%}
+                <p>Waiting for response</p>
+              {% else %}
+                <a role="button" class="btn btn-outline-light" href="{{ url_for('posts.edit_challenge', challenge_id=challenge.id) }}">Please respond</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% if not challenges_made.items and not challenges_received.items %}
+      <p>You have not made or received any challenges...</p>
+    {% endif %}
+    <hr>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        {% if challenges_made.items %}
+          <h3>Challenges made</h3>
+          {% for challenge in challenges_made.items %}
+            <div class="challenge-section" id="{{ 'green' if challenge in challenges_active else 'blue'}}">
+              <h5>{{ challenge.title }} | for {{ challenge.amount }}.00 ₲</h5>
+              <p>
+              {% for line in challenge.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
+            </div>
+          {% endfor %}
+        {% endif %}
+        <div class="row mt-1">
+          <div class="col-12" align="center">
+            {% for page_num in challenges_made.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+              {% if page_num %}
+                {% if challenges_made.page == page_num %}
+                  <a class="btn btn-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_m=page_num, page_r=challenges_received.page) }}">{{ page_num }}</a>
+                {% else %}
+                  <a class="btn btn-outline-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_m=page_num, page_r=challenges_received.page) }}">{{ page_num }}</a>
+                {% endif %}
+              {% else %}
+                ...
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        {% if challenges_received.items %}
+          <h3>Challenges received</h3>
+          {% for challenge in challenges_received.items %}
+            <div class="challenge-section" id="{{ 'green' if challenge in challenges_active else 'pink'}}">
+              <h5>{{ challenge.title }} | for {{ challenge.amount }}.00 ₲</h5>
+              <p>
+              {% for line in challenge.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
+            </div>
+          {% endfor %}
+        {% endif %}
+        <div class="row mt-1">
+          <div class="col-12" align="center">
+            {% for page_num in challenges_received.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+              {% if page_num %}
+                {% if challenges_received.page == page_num %}
+                  <a class="btn btn-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_r=page_num, page_m=challenges_made.page) }}">{{ page_num }}</a>
+                {% else %}
+                  <a class="btn btn-outline-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_r=page_num, page_m=challenges_made.page) }}">{{ page_num }}</a>
+                {% endif %}
+              {% else %}
+                ...
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade completeModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5>Are you sure?</h5>
+          </div>
+
+          <div class="modal-body">
+            Have you completed the challenge thoroughly? A false completion claim could lead to consequences...
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="closeModal btn btn-outline-primary">Close</button>
+            <button type="button" class="completeClaim btn btn-success" id="">Completed</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="modal fade verifyModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5>Please verify</h5>
+          </div>
+
+          <div class="modal-body customModalBody">
+
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="closeModal btn btn-outline-primary">Close</button>
+            <button type="button" class="verifyChallenge btn btn-success" id="">Verify</button>
+            <button type="button" class="refuseClaim btn btn-danger" id="">Refuse</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+  {% endblock %}

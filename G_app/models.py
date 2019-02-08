@@ -1,4 +1,5 @@
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from flask import url_for
 from datetime import datetime
 from G_app import db, login_manager, app
 from flask_login import UserMixin
@@ -29,6 +30,8 @@ class User(db.Model, UserMixin):
     payments_received = db.relationship('Transaction', backref='payee', lazy=True, foreign_keys='Transaction.id_payee')
     challenges_made =  db.relationship('Challenge', backref='challenger', lazy=True, foreign_keys='Challenge.id_challenger')
     challenges_received =  db.relationship('Challenge', backref='challengee', lazy=True, foreign_keys='Challenge.id_challengee')
+    bets_made =  db.relationship('Bet', backref='bookmaker', lazy=True, foreign_keys='Bet.id_bookmaker')
+    bets_taken =  db.relationship('Bet', backref='bettaker', lazy=True, foreign_keys='Bet.id_bettaker')
     comments = db.relationship('Comment', backref='commenter', lazy=True)
     votes_made = db.relationship('Vote', backref='voter', lazy=True, foreign_keys='Vote.id_voter')
     votes_received = db.relationship('Vote', backref='candidate', lazy=True, foreign_keys='Vote.id_candidate')
@@ -67,6 +70,9 @@ class User(db.Model, UserMixin):
         transaction = Transaction(title=title, description=description, amount=amount, id_payer=self.id, id_payee=recipient.id)
         db.session.add(transaction)
         db.session.commit()
+        content = "{} has transfered you {:.2f} ₲!".format(self.username, amount)
+        link = url_for('main.my_transactions')
+        recipient.notification(title="TRANSFER", content=content, link=link)
 
     def deduct(self, amount):
         admin = User.query.get(6)
@@ -148,7 +154,7 @@ class Groceries(db.Model):
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(100), nullable=False)
-    description = db.column(db.String(200))
+    description = db.Column(db.String(200))
     amount = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     id_payer = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -168,6 +174,7 @@ class Challenge(db.Model):
     win_claim = db.Column(db.Boolean)
     won = db.Column(db.Boolean)
     amount = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     id_challenger = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     id_challengee = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -185,9 +192,10 @@ class Bet(db.Model):
     win_claim = db.Column(db.Boolean)
     won = db.Column(db.Boolean)
     amount = db.Column(db.Integer, nullable=False)
-    odds = db.Column(db.Integer, nullable=False)
+    odds = db.Column(db.Float, nullable=False)
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     id_bookmaker = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    id_bettaker= db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    id_bettaker= db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __repr__(self):
         return "Bet({} | Bookmaker: {} - Taker: {})".format(self.title, self.id_bookmaker, self.id_bettaker)

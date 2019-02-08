@@ -20,7 +20,7 @@ def get_choices():
     users = User.query.all()
     for user in users:
         username = user.username
-        if username != 'admin':
+        if username != 'admin' and user != current_user:
             choices.append((username, username))
     return choices
 
@@ -77,6 +77,25 @@ def number_voted(post_id):
     return len(voters[post_id])
 
 
+def create_bet_post(bet):
+    if not bet.bettaker:
+        bettaker = "the first person willing to accept it"
+        optional = "\nGo to the 'Available bets' section to accept."
+    else:
+        bettaker = bet.bettaker.username
+        optional = ''
+    title = "{} has issued a bet to {}! (ID: {})".format(bet.bookmaker.username, bettaker, bet.id)
+    content = """Title: {}
+Description: {}
+Amount: {:.2f} ₲
+Odds: {}{}""".format(bet.title, bet.description, bet.amount, bet.odds, optional)
+    type = "Bet"
+    id_user = 6 #admin
+    post = Post(title=title, content=content, type=type, id_user=id_user)
+    db.session.add(post)
+    db.session.commit()
+
+
 def create_challenge_post(challenge):
     title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
     content = """Title: {}
@@ -117,6 +136,34 @@ THIS CHALLENGE HAS BEEN ACCEPTED AND IS ACTIVE""".format(challenge.title, challe
     db.session.commit()
 
 
+def finish_challenge_post(challenge):
+    title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
+    post = Post.query.filter_by(title=title).first()
+    content = """Title: {}
+Description: {}
+Amount: {}.00₲
+THIS CHALLENGE IS DONE""".format(challenge.title, challenge.description, challenge.amount)
+    post.content = content
+    post.date_posted = datetime.utcnow()
+    db.session.commit()
+
+
+def create_bet_notification(bet):
+    title = "NEW BET"
+    if not bet.bettaker:
+        content = "{} has issued a bet to the first person willing to accept!".format(bet.bookmaker.username)
+        link = "#"
+        users = User.query.all()
+        users.pop(5)
+        users.remove(bet.bookmaker)
+        for user in users:
+            user.notification(title=title, content=content, link=link)
+    else:
+        content = "{} has issued a bet to you.".format(bet.bookmaker.username)
+        link = "#"
+        bet.bettaker.notification(title=title, content=content, link=link)
+
+
 def new_challenge_notification(challenge):
     title = "NEW CHALLENGE"
     content = "{} has issued a challenge to you!".format(challenge.challenger.username)
@@ -140,12 +187,36 @@ def modify_challenge_notification(challenge):
 def accept_challenge_notification(challenge):
     title = "ACCEPT CHALLENGE"
     content = "The challenge: '{}' has been accepted!".format(challenge.title)
-    link = "#"
+    link = url_for('posts.challenge', challenge_id=challenge.id)
     users = User.query.all()
     users.pop(5)
     for user in users:
         user.notification(title=title, content=content, link=link)
 
+
+def finish_challenge_notification(challenge):
+    title = "FINISH CHALLENGE"
+    content = "The challenge: '{}' has {}been completed"
+    link = url_for('posts.challenge', challenge_id=challenge.id)
+    if challenge.won:
+        content = content.format(challenge.title, "")
+    else:
+        content = content.format(challenge.title, "not ")
+    users = User.query.all()
+    users.pop(5)
+    for user in users:
+        user.notification(title=title, content=content, link=link)
+
+
+def pending_active_challenges(challenges):
+    pendings = []
+    actives = []
+    for challenge in challenges:
+        if challenge.active and (not challenge.accepted_by_challenger or not challenge.accepted_by_challengee):
+            pendings.append(challenge)
+        elif challenge.active and challenge.accepted_by_challenger and challenge.accepted_by_challengee:
+            actives.append(challenge)
+    return pendings, actives
 
 
 def create_post_notifications(post):

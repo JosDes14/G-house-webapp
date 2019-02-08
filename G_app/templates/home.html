@@ -15,13 +15,28 @@
 
       <div class="row" style="margin-top:10px">
         <h3 class="ml-3">Posts</h3>
-        <div class="btn-group ml-auto">
-          <a href="{{ url_for('posts.new_post', post_type='Mess') }}" class="btn btn-outline-danger">Mess</a>
-          <a href="{{ url_for('posts.new_post', post_type='Punish') }}" class="btn btn-outline-warning">Punish</a>
-          <a href="{{ url_for('posts.new_post', post_type='General') }}" class="btn btn-outline-info">General</a>
-          <a href="{{ url_for('posts.new_post', post_type='Request') }}" class="btn btn-outline-success">Request</a>
-          <a href="{{ url_for('posts.new_challenge') }}" class="btn btn-outline-primary">Challenge</a>
-          <a href="#" class="btn btn-outline-secondary">Bet</a>
+        <div class="btn-group ml-auto mr-3">
+          <a role="button" href="{{ url_for('posts.new_post', post_type='Mess') }}" class="btn btn-outline-danger">Mess</a>
+          <a role="button" href="{{ url_for('posts.new_post', post_type='Punish') }}" class="btn btn-outline-warning">Punish</a>
+          <a role="button" href="{{ url_for('posts.new_post', post_type='General') }}" class="btn btn-outline-info">General</a>
+          <a role="button" href="{{ url_for('posts.new_post', post_type='Request') }}" class="btn btn-outline-success">Request</a>
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-toggle="dropdown">Challenge</button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{ url_for('posts.new_challenge') }}">Create challenge</a>
+              <a class="dropdown-item" href="{{ url_for('posts.my_challenges') }}">My challenges</a>
+              <a class="dropdown-item" href="{{ url_for('posts.all_challenges') }}">All challenges</a>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">Bet</button>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{ url_for('posts.new_bet') }}">Create bet</a>
+              <a class="dropdown-item" href="#">My bets</a>
+              <a class="dropdown-item" href="{{ url_for('posts.available_bets') }}">Available bets</a>
+              <a class="dropdown-item" href="#">All bets</a>
+            </div>
+          </div>
         </div>
       </div>
       <hr>
@@ -68,7 +83,7 @@
                     </form>
                   </div>
                   <div class="vote-alert" id="{{ 'alert' + post.id|string }}" style="display:none;">
-                    <p class="rate-success" id="{{ 'rating' + post.id|string }}"></p>
+                    <p class="success" id="{{ 'rating' + post.id|string }}"></p>
                   </div>
                   <small style="margin-left:15px" id="{{ 'msg' + post.id|string }}">The current rating will be revealed once you have rated.</small>
                 </div>

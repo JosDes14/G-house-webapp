@@ -7,10 +7,17 @@ from G_app.users.utils import *
 
 users = Blueprint('users', __name__)
 
+
+@users.context_processor
+def context_processor():
+    chug = chug_matrix()
+    members=member_ls()
+    return dict(chug=chug, members=members)
+
+
+
 @users.route("/login", methods=['GET','POST'])
 def login():
-    chug = chug_matrix()
-    members = member_ls()
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = LoginForm()
@@ -22,7 +29,8 @@ def login():
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
             flash("Login not successful. Check email and password.", 'danger')
-    return render_template('login.html', title='Login', form=form, members=members, chug=chug)
+    return render_template('login.html', title='Login', form=form)
+
 
 
 @users.route("/logout")
@@ -31,24 +39,22 @@ def logout():
     return redirect(url_for('main.home'))
 
 
+
 @users.route("/user/<username>")
 @login_required
 def profile(username):
-    members = member_ls()
-    chug = chug_matrix()
     user = User.query.filter_by(username=username).first()
     if user:
         user_image = url_for('static', filename="profile_pics/{}".format(user.image))
-        return render_template('profile.html', members=members, chug=chug, user=user, user_image=user_image)
+        return render_template('profile.html', user=user, user_image=user_image)
     else:
         return abort(404)
+
 
 
 @users.route("/account", methods=['GET','POST'])
 @login_required
 def account():
-    chug = chug_matrix()
-    members = member_ls()
     form = UpdateForm()
     if form.validate_on_submit():
         if form.picture.data:
@@ -65,30 +71,28 @@ def account():
         form.username.data = current_user.username
         form.email.data = current_user.email
     user_image = url_for('static', filename="profile_pics/{}".format(current_user.image))
-    return render_template('account.html', title='Account', members=members, chug=chug, user_image=user_image, form=form)
+    return render_template('account.html', title='Account', user_image=user_image, form=form)
+
 
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
     if current_user.is_authenticated:
         return redirect('home')
-    chug = chug_matrix()
-    members = member_ls()
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         send_reset_email(user)
         flash("An email has been sent with reset instructions.", 'info')
         return redirect(url_for('users.login'))
-    return render_template('request_reset.html', chug=chug, members=members, form=form)
+    return render_template('request_reset.html', form=form)
+
 
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
 def reset_token(token):
     if current_user.is_authenticated:
         return redirect('home')
-    chug = chug_matrix()
-    members = member_ls()
     user = User.verify_reset_token(token)
     if not user:
         flash("Invalid or expired token.", 'danger')
@@ -100,7 +104,7 @@ def reset_token(token):
         db.session.commit()
         flash("Your password has been updated!", 'success')
         return redirect('login')
-    return render_template('reset_token.html', chug=chug, members=members, form=form)
+    return render_template('reset_token.html', form=form)
 
 
 

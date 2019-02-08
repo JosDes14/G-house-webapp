@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bet_info.js') }}"></script>
+  {% endblock %}
+
+  {% block content %}
+    <div class="row mt-2">
+      <div class="col-12">
+        <div class="row">
+          <div class="col-12 info-box" style="display:none">
+            <div class="card bg-info">
+              <div class="card-body">
+                <p class="card-text info-text">some info</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <form class="mt-2" method="POST" action="" novalidate>
+          {{ form.hidden_tag() }} <!-- In combination with hidden key, prevents certain attacks... -->
+          <fieldset class="form-group">
+            <legend>New bet:</legend>
+            <hr>
+            <div class="form-group">
+              {{ form.title.label(class="form-control-label") }}
+              {% if form.title.errors %}
+                  {{ form.title(class="form-control form-control-lg is-invalid") }}
+                  <div class="invalid-feedback">
+                      {% for error in form.title.errors %}
+                          <span>{{ error }}</span>
+                      {% endfor %}
+                  </div>
+              {% else %}
+                  {{ form.title(class="form-control form-control-lg") }}
+              {% endif %}
+            </div>
+            <div class="form-group">
+              {{ form.description.label(class="form-control-label") }}
+              <span style="display:inline-block; width:20px;"></span>
+              <small>(cannot exceed 300 characters)</small>
+              {% if form.description.errors %}
+                  {{ form.description(class="form-control form-control-lg is-invalid") }}
+                  <div class="invalid-feedback">
+                      {% for error in form.description.errors %}
+                          <span>{{ error }}</span>
+                      {% endfor %}
+                  </div>
+              {% else %}
+                  {{ form.description(class="form-control form-control-lg") }}
+              {% endif %}
+            </div>
+            <div class="row">
+              <div class="col-6">
+                <div class="form-group">
+                  {{ form.amount.label(class="form-control-label") }}
+                  {% if form.amount.errors %}
+                      {{ form.amount(class="form-control form-control-lg is-invalid") }}
+                      <div class="invalid-feedback">
+                          {% for error in form.amount.errors %}
+                              <span>{{ error }}</span>
+                          {% endfor %}
+                      </div>
+                  {% else %}
+                      {{ form.amount(class="form-control form-control-lg amount", onchange="updateInfo()") }}
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-group">
+                  {{ form.odds.label(class="form-control-label") }}
+                  {% if form.odds.errors %}
+                      {{ form.odds(class="form-control form-control-lg is-invalid") }}
+                      <div class="invalid-feedback">
+                          {% for error in form.odds.errors %}
+                              <span>{{ error }}</span>
+                          {% endfor %}
+                      </div>
+                  {% else %}
+                      {{ form.odds(class="form-control form-control-lg odds", onchange="updateInfo()") }}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              {{ form.target.label() }}
+              {{ form.target() }}
+            </div>
+          </fieldset>
+          <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info") }}
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endblock %}

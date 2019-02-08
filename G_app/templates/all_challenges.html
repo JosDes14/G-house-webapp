@@ -1,9 +1,12 @@
-{% extends "layout.html" %}
+{% extends 'layout.html' %}
 
-    {% block scripts %}
-    {% endblock %}
+  {% block scripts %}
+  {% endblock %}
 
-    {% block content %}
+  {% block content %}
+
+    <h3 class="border-bottom border-secondary pb-1 mb-4">All challenges</h3>
+    {% for challenge in challenges.items %}
       {% if challenge.challenger == current_user %}
         {% set colour = 'blue' %}
         {% set status = 'You are the challenger' %}
@@ -21,19 +24,6 @@
         {% set colour = 'green' %}
         {% set status = 'Active challenge' %}
       {% endif %}
-      <div class="row">
-        <div class="col-12 mt-2" align="center">
-          <div class="indicator-row" id="{{ colour }}">
-            <small>{{ status }}</small>
-          </div>
-        </div>
-      </div>
-
-      <!--<div class="row indicator-row mb-2">
-        <div class="col-12" id="{{ colour }}" align="center">
-          <small>{{ status }}</small>
-        </div>
-      </div>-->
       <div class="media mt-2">
         <figure class="mr-2" align="center">
           <img class="rounded-circle account-img" id="small" src="{{ url_for('static', filename='profile_pics/' + challenge.challenger.image) }}" alt="user_image">
@@ -46,7 +36,14 @@
         </figure>
         <div class="media-body">
           <div class="challenge-section">
-            <h5 class="border-bottom border-secondary pb-1">{{ challenge.title }}</h5>
+            <div class="row mb-2">
+              <div class="col-12" align="center">
+                <div class="indicator-row" id="{{ colour }}">
+                  <small>{{ status }}</small>
+                </div>
+              </div>
+            </div>
+            <h5 class="border-bottom border-top border-secondary pb-1 pt-1">{{ challenge.title }}</h5>
             <p>
               <strong>Description:</strong>
               {% for line in challenge.description.splitlines() %}
@@ -68,4 +65,21 @@
           </div>
         </div>
       </div>
-    {% endblock %}
+    {% endfor %}
+    <div class="row mt-2 mb-2">
+      <div class="col-12" align="center">
+        {% for page_num in challenges.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+          {% if page_num %}
+            {% if challenges.page == page_num %}
+              <a class="btn btn-secondary ml-1 mr-1" href="{{ url_for('posts.all_challenges', page=page_num) }}">{{ page_num }}</a>
+            {% else %}
+              <a class="btn btn-outline-secondary ml-1 mr-1" href="{{ url_for('posts.all_challenges', page=page_num) }}">{{ page_num }}</a>
+            {% endif %}
+          {% else %}
+            ...
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+  {% endblock %}

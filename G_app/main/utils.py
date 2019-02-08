@@ -1,4 +1,5 @@
 from G_app import db, scheduler
+import sys
 from flask import url_for
 from G_app.models import User, Chug, Post, Total, Vote, WeeklyVote
 from flask_login import current_user
@@ -22,6 +23,16 @@ def chug_matrix():
     for chug in chugs_to_be_taken:
         matrix[chug.id_taker - 1][chug.id_giver - 1] += 1
     return matrix
+
+
+def get_choices():
+    choices = []
+    users = User.query.all()
+    for user in users:
+        username = user.username
+        if username != 'admin' and user != current_user:
+            choices.append((username, username))
+    return choices
 
 
 def update_status(home, out, sleeping):
@@ -66,17 +77,6 @@ def voter_dict():
             voters = []
         voted[post.id] = voters
     return voted
-
-
-
-def get_choices():
-    choices = []
-    users = User.query.all()
-    for user in users:
-        username = user.username
-        if username != 'admin':
-            choices.append((username, username))
-    return choices
 
 
 def get_post_amount():

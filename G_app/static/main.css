@@ -17,7 +17,7 @@ body {
   margin-left: 10px;
 }
 
-.rate-success {
+.success {
   background-color: #7FB592;
   padding: 2px;
   border: 1px solid #659074;
@@ -53,6 +53,13 @@ h6#General {
   padding: 2px;
   border-radius: 2px;
 }
+
+h6#Bet {
+  background-color: #868e96;
+  padding: 2px;
+  border-radius: 2px;
+}
+
 .alert {
   margin-top:1%;
 }
@@ -87,6 +94,10 @@ h6#General {
   min-width: 20em;
 }
 
+.divider-right {
+  border-right: 0.5px solid rgb(120, 120, 120);
+}
+
 .account-section {
   background-color:  rgba(200, 200, 200, 0.8);
   border: 0.5px solid rgb(150, 150, 150);
@@ -100,6 +111,28 @@ h6#General {
   border: 0.5px solid rgb(130, 130, 130);
   border-radius: 1px;
   padding: 10px;
+}
+
+.challenge-section {
+  margin-top: 5px;
+  background-color:  rgb(160, 160, 160);
+  border: 0.5px solid rgb(130, 130, 130);
+  border-radius: 3px;
+  padding: 10px;
+}
+
+.bet-section {
+  background-color:  rgb(200, 200, 200);
+  border: 0.5px solid rgb(130, 130, 130);
+  border-radius: 3px;
+  padding: 10px;
+}
+
+.transaction-section {
+  background-color:  rgba(200, 200, 200, 0.8);
+  border: 0.5px solid rgb(180, 180, 180);
+  border-radius: 10px;
+  padding: 5px;
 }
 
 .notification-section {
@@ -117,10 +150,58 @@ h6#General {
   margin-bottom: 5px;
 }
 
+.indicator-row {
+  height: 25px;
+  width: 100%;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+
+.transfer-amount {
+  padding: 5px;
+  border-radius: 5px;
+}
+
+#blue {
+  background-color:  rgb(153, 211, 223);
+}
+
+#pink {
+  background-color: rgb(255, 132, 132);
+}
+
+#green {
+  background-color: rgb(40, 167, 69);
+}
+
+#yellow {
+  background-color: rgb(253, 244, 152);
+}
+
+#brown {
+  background-color: rgb(114, 98, 85);
+}
+
+#red {
+  background-color: rgb(255, 115, 115);
+}
+
+
+
 .account-img {
   height: 100px;
   width: 100px;
   margin-right: 2%;
+}
+
+.account-img#small {
+  height: 60px;
+  width: 60px;
+}
+
+.right-arrow {
+  margin-top: 18px;
+  font-size: 24px;
 }
 
 .sidebar {

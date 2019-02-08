@@ -11,6 +11,9 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
 
+    <link rel='stylesheet' href='https://use.fontawesome.com/releases/v5.7.0/css/all.css' integrity='sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ' crossorigin='anonymous'>
+
+
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
     <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}"/>
 
@@ -54,6 +57,13 @@
             <li class={% block groceries_active %}{% endblock %}><a class="nav-link" href="{{ url_for('main.groceries') }}">Groceries</a></li>
             <li class={% block calendar_active %}{% endblock %}><a class="nav-link" href=#>Calendar</a></li>
             <li class={% block automation_active %}{% endblock %}><a class="nav-link" href=#>Automation</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">Transaction</a>
+              <div class="dropdown-menu">
+                <a class="dropdown-item" href="{{ url_for('main.my_transactions') }}">Transaction history</a>
+                <a class="dropdown-item" href="{{ url_for('main.transfer') }}">Transfer</a>
+              </div>
+            </li>
           </ul>
         {% endif %}
         <ul class="navbar-nav ml-auto">

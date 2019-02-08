@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+  {% block content %}
+    <h3 class="border-bottom border-secondary mb-1">Transactions</h3>
+    {% for transaction in transactions.items %}
+      {% if transaction.payer == current_user %}
+        {% set icon = 'fas fa-chevron-circle-left' %}
+        {% set name = transaction.payee.username %}
+        {% set id = 'red' %}
+        {% set sign = '-' %}
+      {% elif transaction.payee == current_user %}
+        {% set icon = 'fas fa-chevron-circle-right' %}
+        {% set name = transaction.payer.username %}
+        {% set id = 'green' %}
+        {% set sign = '+' %}
+      {% endif %}
+      {% if not transaction.date.date() in dates %}
+        <div class="row">
+          <div class="col-12" align="center">
+            <p class="border-bottom border-muted mb-1 mt-3">{{ transaction.date.date() }}</p>
+          </div>
+        </div>
+        {% do dates.append(transaction.date.date()) %}
+      {% endif %}
+      <div class="transaction-section mt-2">
+        <div class="row">
+          <div class="col-1 my-auto" align="center">
+            <i class="{{ icon }}"></i>
+          </div>
+          <div class="col-2 my-auto" style="top: 3px">
+            <h6>{{ name }}</h6>
+          </div>
+          <div class="col-6 my-auto" style="bottom: 1px">
+            <small>{{ transaction.title }}</small>
+          </div>
+          <div class="col-3 my-auto" align="center" style="bottom: 1px">
+            <small class="transfer-amount" id="{{ id }}">
+              {{ sign }}
+              {{ '%0.2f'|format(transaction.amount|float) }} ₲
+            </small>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    <div class="row mt-4 mb-2">
+      <div class="col-12" align="center">
+        {% for page_num in transactions.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+          {% if page_num %}
+            {% if transactions.page == page_num %}
+              <a class="btn btn-secondary ml-1 mr-1" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+            {% else %}
+              <a class="btn btn-outline-secondary ml-1 mr-1" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+            {% endif %}
+          {% else %}
+            ...
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endblock %}
