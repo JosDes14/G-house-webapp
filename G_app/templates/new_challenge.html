@@ -42,18 +42,47 @@
                   {{ form.description(class="form-control form-control-lg") }}
               {% endif %}
             </div>
-            <div class="form-group">
-              {{ form.amount.label(class="form-control-label") }}
-              {% if form.amount.errors %}
-                  {{ form.amount(class="form-control form-control-lg is-invalid") }}
-                  <div class="invalid-feedback">
-                      {% for error in form.amount.errors %}
-                          <span>{{ error }}</span>
-                      {% endfor %}
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  {{ form.amount.label(class="form-control-label") }}
+                  {% if form.amount.errors %}
+                      {{ form.amount(class="form-control form-control-lg is-invalid") }}
+                      <div class="invalid-feedback">
+                          {% for error in form.amount.errors %}
+                              <span>{{ error }}</span>
+                          {% endfor %}
+                      </div>
+                  {% else %}
+                      {{ form.amount(class="form-control form-control-lg") }}
+                  {% endif %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <div class="row">
+                    <div class="col-9">
+                      {{ form.time_limit.label(class="form-control-label") }}
+                    </div>
+                    <div class="col-3" align="right">
+                      <a href="#" data-toggle="popover" data-trigger="focus" title="Time Limit" data-content="This is the exact date before which the
+                      challenge must be completed. Default is 1 day from now." style="color:black">
+                        <i class="fas fa-info-circle"></i>
+                      </a>
+                    </div>
                   </div>
-              {% else %}
-                  {{ form.amount(class="form-control form-control-lg") }}
-              {% endif %}
+                  {% if form.time_limit.errors %}
+                      {{ form.time_limit(class="form-control form-control-lg is-invalid") }}
+                      <div class="invalid-feedback">
+                          {% for error in form.time_limit.errors %}
+                              <span>{{ error }}</span>
+                          {% endfor %}
+                      </div>
+                  {% else %}
+                      {{ form.time_limit(class="form-control form-control-lg") }}
+                  {% endif %}
+                </div>
+              </div>
             </div>
             <div class="form-group">
               {{ form.target.label() }}

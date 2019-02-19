@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/take_chug.js') }}"></script>
+  {% endblock %}
+
+  {% block content %}
+
+    {% if chug.active and not chug.accepted %}
+      {% set status = "The chug has been given but " + chug.taker.username + " hasn't accepted yet." %}
+      {% set to_accept = 1 %}
+    {% elif chug.active and chug.accepted %}
+      {% set status = chug.taker.username + " still has to take this chug" %}
+      {% set to_accept = 0 %}
+    {% elif chug.taken %}
+      {% set status = chug.taker.username + " has taken this chug" %}
+      {% set to_accept = 0 %}
+    {% else %}
+      {% set status = chug.taker.username + " has defended this chug by spending ₲₲₲" %}
+      {% set to_accept = 0 %}
+    {% endif %}
+
+
+    <div class="row">
+      <div class="col-12 mt-2" align="center">
+        <div class="indicator-row" id="blue">
+          <small class="status">{{ status }}</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="media mt-2">
+      <figure class="mr-2" align="center">
+        <img class="rounded-circle account-img" id="small" src="{{ url_for('static', filename='profile_pics/' + chug.giver.image) }}" alt="user_image">
+        <figcaption>{{ chug.giver.username }}</figcaption>
+      </figure>
+      <i class="fas fa-angle-right mr-2 right-arrow"></i>
+      <figure class="mr-2" align="center">
+        <img class="rounded-circle account-img" id="small" src="{{ url_for('static', filename='profile_pics/' + chug.taker.image) }}" alt="user_image">
+        <figcaption>{{ chug.taker.username }}</figcaption>
+      </figure>
+      <div class="media-body">
+        <div class="bet-section">
+          <h5 class="border-bottom border-secondary pb-1">{{ chug.title }}</h5>
+          <div class="row">
+            <div class="col-md-6">
+              <strong>Date given:</strong>
+              {{ chug.date_given.date() }}
+            </div>
+            <div class="col-md-6">
+              <strong>Date taken:</strong>
+              {% if chug.date_taken %}
+                {{ chug.date_taker.date() }}
+              {% else %}
+                N/A
+              {% endif %}
+            </div>
+          </div>
+          {% if current_user == chug.taker and to_accept == 1 %}
+            <div class="accept-refuse-menu">
+              <hr>
+              <div class="row mt-4 mb-2">
+                <div class="col-6" align="center">
+                  <button type="button" class="btn btn-outline-success" onclick="acceptChug({{ chug.id }})">Accept</button>
+                </div>
+                <div class="col-6" align="center">
+                  <button type="button" class="btn btn-outline-danger" onclick="showModal({{ chug.id }}, {{ current_user.bucks }}, {{ chug_price }})">Refuse</button>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <small>
+                    If you accept this chug then {{ chug.giver.username }} has the right to make you chug a 500ml beer at any point in time.
+                    If you refuse this chug you will have to spend {{ '%0.2f'|format(chug_price)|float }} ₲, otherwise you cannot it...
+                  </small>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade refuseModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="customHeader"></h5>
+          </div>
+
+          <div class="modal-body customBody">
+          </div>
+
+          <div class="modal-footer customFooter">
+            <button type="button" class="btn btn-outline-primary" onclick="closeModal()">Close</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  {% endblock %}

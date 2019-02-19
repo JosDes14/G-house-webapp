@@ -19,7 +19,7 @@ def chug_matrix():
         [0, 0, 0, None, 0],
         [0, 0, 0, 0, None]
     ]
-    chugs_to_be_taken = Chug.query.filter_by(taken=False).all()
+    chugs_to_be_taken = Chug.query.filter(Chug.active==True, Chug.accepted==True).all()
     for chug in chugs_to_be_taken:
         matrix[chug.id_taker - 1][chug.id_giver - 1] += 1
     return matrix

@@ -1,9 +1,11 @@
+import json
 from flask import render_template, url_for, flash, redirect, request, abort, Blueprint, jsonify
 from G_app.users.forms import LoginForm, UpdateForm, RequestResetForm, ResetPasswordForm
 from G_app.models import User, Post, Chug, Groceries
-from G_app import db, bcrypt, mail
+from G_app import db, bcrypt, mail, scheduler
 from flask_login import login_user, current_user, logout_user, login_required
 from G_app.users.utils import *
+from datetime import datetime, timedelta
 
 users = Blueprint('users', __name__)
 
@@ -12,7 +14,7 @@ users = Blueprint('users', __name__)
 def context_processor():
     chug = chug_matrix()
     members=member_ls()
-    return dict(chug=chug, members=members)
+    return dict(chug_matrix=chug, members=members)
 
 
 
@@ -46,7 +48,7 @@ def profile(username):
     user = User.query.filter_by(username=username).first()
     if user:
         user_image = url_for('static', filename="profile_pics/{}".format(user.image))
-        return render_template('profile.html', user=user, user_image=user_image)
+        return render_template('profile.html', user=user, user_image=user_image, chug_price=chug_price())
     else:
         return abort(404)
 
@@ -122,3 +124,57 @@ def update_status(user_id):
     user.status = status.capitalize()
     db.session.commit()
     return ""
+
+
+
+@users.route("/give_chug", methods=['POST'])
+def give_chug():
+    recipient_id = request.form.get('recipient_id')
+    giver_id = request.form.get('giver_id')
+    recipient = User.query.get(recipient_id)
+    giver = User.query.get(giver_id)
+    title = "{} gives {} a chug".format(giver.username, recipient.username)
+    chug = Chug(title=title, id_taker=recipient_id, id_giver=giver_id)
+    db.session.add(chug)
+    db.session.commit()
+    giver.deduct(chug_price())
+    accept_by_date = datetime.now() + timedelta(seconds=30)
+    scheduler.add_job(func=accept_chug, args=[chug.id], trigger='date', run_date=accept_by_date, id='chug'+str(chug.id))
+    chug.create_notification()
+    return jsonify({ 'content' : 'success' })
+
+
+
+@users.route("/respond_chug", methods=['POST'])
+def respond_chug():
+    chug_id = request.form.get('chug_id')
+    accept = json.loads(request.form.get('accept'))
+    scheduler.remove_job('chug'+str(chug_id))
+    chug = Chug.query.get(chug_id)
+    chug.accepted = accept
+    if not accept:
+        chug.taker.deduct(chug_price())
+        chug.active = False
+    chug.accept_notification()
+    db.session.commit()
+    return jsonify({ 'content' : chug.title })
+
+
+
+@users.route("/decrease_chug", methods=['POST'])
+def decrease_chug():
+    id_giver = request.form.get('id_giver')
+    id_taker = request.form.get('id_taker')
+    chug = Chug.query.filter(Chug.id_taker==id_taker, Chug.id_giver==id_giver, Chug.active==True, Chug.accepted==True).first()
+    chug.active = False
+    chug.taken = True
+    db.session.commit()
+    return jsonify({ 'content' : chug.id })
+
+
+
+@users.route("/chug/id/<int:chug_id>")
+@login_required
+def chug(chug_id):
+    chug = Chug.query.get_or_404(chug_id)
+    return render_template('chug.html', chug=chug, chug_price=chug_price())

@@ -23,7 +23,8 @@
     {% endblock %}
 
     <script type="text/javascript" src="{{ url_for('static', filename='js/notifications.js') }}"></script>
-
+    <script type="text/javascript" src="{{ url_for('static', filename='js/enable_popover.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/chug_popover.js') }}"></script>
 
   </head>
   <body style="background-image: url('{{ url_for('static', filename='images/our_goat.jpg') }}')">
@@ -147,8 +148,54 @@
                   <tr>
                     <th id="chug">{{members[row].username}}</th>
                     {% for col in range(5) %}
-                      {% if chug[row][col] != None %}
-                        <td id="chug">{{ chug[row][col] }}</td>
+                      {% if chug_matrix[row][col] != None %}
+                        <td id="chug">
+                          {% if current_user.id == col + 1 %}
+                            <a  href="#"
+                                data-html="true"
+                                data-trigger="focus"
+                                data-toggle="popover"
+                                title="Add/remove chug"
+                                data-content="
+                                  <div class='row'>
+                                    <div class='col-6' align='center'>
+                                      <a href='{{ url_for('users.profile', username=members[row].username) }}' class='btn btn-outline-primary'>
+                                        <i class='fas fa-plus'></i>
+                                      </a>
+                                    </div>
+                                    <div class='col-6' align='center'>
+                                      <button class='btn btn-outline-primary' onclick='showDecreaseModal({{ row }}, {{ col }}, {{ chug_matrix[row][col] }})'>
+                                        <i class='fas fa-minus'></i>
+                                      </button>
+                                    </div>
+                                  </div>
+                                  ">
+                              <strong>{{ chug_matrix[row][col] }}</strong>
+                            </a>
+                          {% else %}
+                            {{ chug_matrix[row][col] }}
+                          {% endif %}
+                          <!--
+                          <a href="#" onclick="fillPopover({{ row }}, {{ col }})" id="{{ row|string+col|string }}">
+                            {{ chug_matrix[row][col] }}
+                          </a>
+                        </td>
+                        <div class="{{ 'popover-content' + row|string+col|string }}" style="display: none;">
+                          <div class="row">
+                            <div class="col-6" align="center">
+                              <button type="button" name="button" class="btn btn-outline-success">
+                                <i class="fas fa-plus"></i>
+                              </button>
+                            </div>
+                            <div class="col-6" align="center">
+                              <button type="button" name="button" class="btn btn-outline-danger">
+                                <i class="fas fa-minus"></i>
+                              </button>
+                            </div>
+                          </div>
+
+
+                        </div>-->
                       {% else %}
                         <td id="chug" bgcolor="#65737e"></td>
                       {% endif %}
@@ -183,6 +230,25 @@
       <div class="sidebar">
         <h2>Mobile Layout</h2>
         <small>Under construction</small>
+      </div>
+    </div>
+
+    <div class="modal fade decreaseModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5 class="customHeader"></h5>
+          </div>
+
+          <div class="modal-body customBody">
+          </div>
+
+          <div class="modal-footer customFooter">
+            <button type="button" class="btn btn-outline-primary" onclick="closeDecreaseModal()">Close</button>
+          </div>
+
+        </div>
       </div>
     </div>
 

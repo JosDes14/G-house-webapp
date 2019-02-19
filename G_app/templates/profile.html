@@ -1,17 +1,31 @@
 {% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/give_chug.js') }}"></script>
+  {% endblock %}
+
   {% block content %}
     <h2>{{ user.name }}</h2>
     <div class="account-section">
       <div class="media">
         <img class="rounded-circle account-img" src="{{ user_image }}" alt="user_image">
         <div class="media-body">
-          <p>
-            <b>Username:</b> {{ user.username }}<br>
-            <b>Email:</b> {{ user.email }}<br>
-            <b>Bucks:</b> {{ user.bucks }}<br>
-            <b>Task:</b> {{ user.task }}<br>
-            <b>Status:</b> {{ user.status }}
-          </p>
+          <div class="row">
+            <div class="col-9 {{ 'divider-right' if current_user != user else '' }}">
+              <p>
+                <b>Username:</b> {{ user.username }}<br>
+                <b>Email:</b> {{ user.email }}<br>
+                <b>Bucks:</b> {{ user.bucks }}<br>
+                <b>Task:</b> {{ user.task }}<br>
+                <b>Status:</b> {{ user.status }}
+              </p>
+            </div>
+            <div class="col-3 my-auto" align="center">
+              {% if user != current_user %}
+                <button class="btn btn-outline-danger" onclick="openModal()">CHUG</button>
+              {% endif %}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -24,5 +38,26 @@
           <small>By {{ post.author.username }} on {{ post.date_posted.date() }}</small>
         </div>
       {% endfor %}
+    </div>
+    <div class="modal fade chugModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5>Are you sure?</h5>
+          </div>
+
+          <div class="modal-body">
+            Giving {{ user.username }} a chug will cost you {{ '%0.2f'|format(chug_price)|float }} ₲.
+            If {{ user.username }} has enough funds he can spends the same amount to defend the chug.
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" onclick="closeModal()">Close</button>
+            <button type="button" class="btn btn-success" onclick="giveChug({{ user.id }}, {{ current_user.id }})">Give chug!</button>
+          </div>
+
+        </div>
+      </div>
     </div>
   {% endblock %}

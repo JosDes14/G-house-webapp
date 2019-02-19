@@ -7,7 +7,7 @@
   {% block content %}
     <h3 class="border-bottom border-secondary mb-3 mt-1">Available bets</h3>
     {% for bet in bets %}
-      {% set to_win = '%0.2f'|format(bet.odds*bet.amount|float) %}
+      {% set to_win = '%0.2f'|format((bet.odds*bet.amount - bet.amount)|float) %}
       <div class="bet-section mt-2" id="{{ bet.id }}">
         <div class="row">
           <div class="col-9 divider-right">

@@ -1,0 +1,97 @@
+{% extends 'layout.html' %}
+
+  {% block content %}
+
+    <h3 class="border-bottom border-secondary pb-1 mb-4">All bets</h3>
+    {% for bet in bets.items %}
+      {% if bet.bookmaker == current_user %}
+        {% set colour = 'blue' %}
+        {% set status = 'You are the bookmaker' %}
+      {% elif bet.bettaker == current_user %}
+        {% set colour = 'pink' %}
+        {% set status = 'You are taking the bet' %}
+      {% elif bet.active %}
+        {% set colour = 'yellow' %}
+        {% set status = 'Negotiation phase' %}
+      {% else %}
+        {% set colour = 'brown' %}
+        {% set status = 'Inactive bet' %}
+      {% endif %}
+      {% if bet.active and bet.accepted_by_bettaker and bet.accepted_by_bookmaker %}
+        {% set colour = 'green' %}
+        {% set status = 'Active bet' %}
+      {% endif %}
+      <div class="media mt-2">
+        <figure class="mr-2" align="center">
+          <img class="rounded-circle account-img" id="small" src="{{ url_for('static', filename='profile_pics/' + bet.bookmaker.image) }}" alt="user_image">
+          <figcaption>{{ bet.bookmaker.username }}</figcaption>
+        </figure>
+        <i class="fas fa-angle-right mr-2 right-arrow"></i>
+        <figure class="mr-2" align="center">
+          {% if bet.bettaker %}
+            <img class="rounded-circle account-img" id="small" src="{{ url_for('static', filename='profile_pics/' + bet.bettaker.image) }}" alt="user_image">
+            <figcaption>{{ bet.bettaker.username }}</figcaption>
+          {% else %}
+            <img class="rounded-circle account-img" id="small" src="{{ url_for('static', filename='images/any_user.jpg') }}" alt="user_image">
+            <figcaption>???</figcaption>
+          {% endif %}
+        </figure>
+        <div class="media-body">
+          <div class="bet-section">
+            <div class="row mb-2">
+              <div class="col-12" align="center">
+                <div class="indicator-row" id="{{ colour }}">
+                  <small>{{ status }}</small>
+                </div>
+              </div>
+            </div>
+            <h5 class="border-bottom border-top border-secondary pb-1 pt-1">{{ bet.title }}</h5>
+            <p>
+              <strong>Description:</strong>
+              {% for line in bet.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+            </p>
+              <div class="row">
+                <div class="col-md-4">
+                  <strong>Amount:</strong>
+                  {{ bet.amount }}.00 ₲
+                </div>
+                <div class="col-md-3">
+                  <strong>Odds:</strong>
+                  {{ bet.odds }}
+                </div>
+                <div class="col-md-5" align="center">
+                  <strong>Date:</strong>
+                  {{ bet.date.date() }}
+                </div>
+              </div>
+            {% if not bet.active %}
+              <div class="border-top border-secondary" style="width:100%">
+                <small>
+                  {{ bet.bettaker.username if bet.won else bet.bookmaker.username }}
+                  won this bet.
+                </small>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+    <div class="row mt-2 mb-2">
+      <div class="col-12" align="center">
+        {% for page_num in bets.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+          {% if page_num %}
+            {% if bets.page == page_num %}
+              <a class="btn btn-secondary ml-1 mr-1" href="{{ url_for('posts.all_bets', page=page_num) }}">{{ page_num }}</a>
+            {% else %}
+              <a class="btn btn-outline-secondary ml-1 mr-1" href="{{ url_for('posts.all_bets', page=page_num) }}">{{ page_num }}</a>
+            {% endif %}
+          {% else %}
+            ...
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+  {% endblock %}

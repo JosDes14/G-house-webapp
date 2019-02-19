@@ -4,8 +4,8 @@ import string
 from PIL import Image
 from flask import url_for
 from flask_mail import Message
-from G_app import mail, app
-from G_app.models import User, Chug
+from G_app import mail, app, db
+from G_app.models import User, Chug, Total
 from flask_login import current_user
 
 
@@ -35,7 +35,7 @@ def chug_matrix():
         [0, 0, 0, None, 0],
         [0, 0, 0, 0, None]
     ]
-    chugs_to_be_taken = Chug.query.filter_by(taken=False).all()
+    chugs_to_be_taken = Chug.query.filter(Chug.active==True, Chug.accepted==True).all()
     for chug in chugs_to_be_taken:
         matrix[chug.id_taker - 1][chug.id_giver - 1] += 1
     return matrix
@@ -61,3 +61,17 @@ def delete_old_picture():
     path = os.path.join(app.root_path, 'static/profile_pics', current_user.image)
     if os.path.exists(path):
         os.remove(path)
+
+
+def accept_chug(chug_id):
+    chug = Chug.query.get(chug_id)
+    chug.accepted = True
+    db.session.commit()
+    chug.auto_accept_notification()
+
+
+def chug_price():
+    total = Total.query.order_by(Total.date.desc()).first()
+    if not total:
+        total = 500
+    return 0.1*total

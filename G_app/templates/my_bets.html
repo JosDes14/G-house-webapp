@@ -1,0 +1,186 @@
+{% extends "layout.html" %}
+
+  {% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/bet_complete.js') }}"></script>
+  {% endblock %}
+
+  {% block content %}
+    {% if bets_active %}
+      <h3 class="mt-1">Active bets</h3>
+      {% for bet in bets_active %}
+        <div class="bet-section {{ 'bet' + bet.id|string }} mt-2" id="green">
+          <div class="row">
+            <div class="col-9 divider-right">
+                <h5>{{ bet.title }} | for {{ bet.amount }}.00 ₲</h5>
+                <p>
+                {% for line in bet.description.splitlines() %}
+                  {{ line }}<br>
+                {% endfor %}
+                </p>
+            </div>
+            <div class="col-3 my-auto" align="center">
+              {% if not bet.win_claim %}
+                {% if current_user == bet.bettaker %}
+                  <div id="{{ 'claimMsg' + bet.id|string }}" style="display:none;">
+                    <p class="success">Let's hope your claim is accepted!</p>
+                  </div>
+                  <button type="button" class="winBtn btn btn-outline-light" id="{{ bet.id }}" onclick="showWinModal('{{ bet.description }}', {{ bet.id }})">Won?</button>
+                {% elif current_user == bet.bookmaker %}
+                  <p>Waiting for {{ bet.bettaker.username }} to make a win claim</p>
+                {% endif %}
+              {% else %}
+                {% if current_user == bet.bettaker %}
+                  <p>Waiting for {{ bet.bookmaker.username }} to verify your claim</p>
+                {% elif current_user == bet.bookmaker %}
+                  <button type="button" class="verifyBtn btn btn-outline-light" onclick="showVerifyModal({{ bet.id }}, '{{ bet.bettaker.username }}')">Verify</button>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+    <hr>
+    {% if bets_pending %}
+      <h3 class="mt-3">Bets pending</h3>
+      {% for bet in bets_pending %}
+        {% if current_user == bet.bookmaker %}
+          {% set color = 'blue' %}
+        {% else %}
+          {% set color = 'pink' %}
+        {% endif %}
+        <div class="bet-section mt-2" id="{{ color }}">
+          <div class="row">
+            <div class="col-9 divider-right">
+              <h5>{{ bet.title }} | for {{ bet.amount }}.00 ₲</h5>
+              <p>
+              {% for line in bet.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
+            </div>
+            <div class="col-3 my-auto" align="center">
+              {% if ( (current_user == bet.bookmaker and bet.accepted_by_challenger) or
+                      (current_user == bet.bettaker and bet.accepted_by_challengee) )%}
+                <p>Waiting for response</p>
+              {% else %}
+                <a role="button" class="btn btn-outline-light" href="{{ url_for('posts.edit_bet', bet_id=bet.id) }}">Please respond</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% if not bets_made.items and not bets_target.items %}
+      <p>You have not made or received any bets...</p>
+    {% endif %}
+    <hr>
+    <div class="row mt-3">
+      <div class="col-md-6">
+        {% if bets_made.items %}
+          <h3>Bets made</h3>
+          {% for bet in bets_made.items %}
+            <div class="bet-section mt-2" id="{{ 'green' if bet in bets_active else 'blue'}}">
+              <h5>{{ bet.title }} | for {{ bet.amount }}.00 ₲</h5>
+              <p>
+              {% for line in bet.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
+            </div>
+          {% endfor %}
+        {% endif %}
+        <div class="row mt-1">
+          <div class="col-12" align="center">
+            {% for page_num in bets_made.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+              {% if page_num %}
+                {% if bets_made.page == page_num %}
+                  <a class="btn btn-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_m=page_num, page_t=bets_target.page) }}">{{ page_num }}</a>
+                {% else %}
+                  <a class="btn btn-outline-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_m=page_num, page_t=bets_target.page) }}">{{ page_num }}</a>
+                {% endif %}
+              {% else %}
+                ...
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        {% if bets_target.items %}
+          <h3>Bets received</h3>
+          {% for bet in bets_target.items %}
+            <div class="bet-section mt-2" id="{{ 'green' if bet in bets_active else 'pink'}}">
+              <h5>{{ bet.title }} | for {{ bet.amount }}.00 ₲</h5>
+              <p>
+              {% for line in bet.description.splitlines() %}
+                {{ line }}<br>
+              {% endfor %}
+              </p>
+            </div>
+          {% endfor %}
+        {% endif %}
+        <div class="row mt-1">
+          <div class="col-12" align="center">
+            {% for page_num in bets_target.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+              {% if page_num %}
+                {% if bets_target.page == page_num %}
+                  <a class="btn btn-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_t=page_num, page_m=bets_made.page) }}">{{ page_num }}</a>
+                {% else %}
+                  <a class="btn btn-outline-secondary ml-1 mr-1 mb-1" href="{{ url_for('posts.my_challenges', page_t=page_num, page_m=bets_made.page) }}">{{ page_num }}</a>
+                {% endif %}
+              {% else %}
+                ...
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade claimModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5>Did you win the bet?</h5>
+          </div>
+
+          <div class="modal-body">
+            <span class="winModalBody" style="white-space: pre-wrap">
+
+            </span>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" onclick="closeModal('claim')">Close</button>
+            <button type="button" class="winClaim btn btn-success" id="">Won</button>
+            <button type="button" class="lostBet btn btn-danger" id="">Lost</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="modal fade verifyModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <div class="modal-header">
+            <h5>Please verify</h5>
+          </div>
+
+          <div class="modal-body verifyModalBody">
+
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" onclick="closeModal('verify')">Close</button>
+            <button type="button" class="verifyWin btn btn-success" id="">Verify</button>
+            <button type="button" class="refuseClaim btn btn-danger" id="">Refuse</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+  {% endblock %}

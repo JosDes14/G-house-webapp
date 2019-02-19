@@ -3,6 +3,7 @@ from flask import url_for
 from datetime import datetime
 from G_app import db, login_manager, app
 from flask_login import UserMixin
+import sys
 
 
 @login_manager.user_loader
@@ -71,7 +72,8 @@ class User(db.Model, UserMixin):
         db.session.add(transaction)
         db.session.commit()
         content = "{} has transfered you {:.2f} ₲!".format(self.username, amount)
-        link = url_for('main.my_transactions')
+        #link = url_for('main.my_transactions')
+        link = "/my_transactions" #hardcoded because app context not always available
         recipient.notification(title="TRANSFER", content=content, link=link)
 
     def deduct(self, amount):
@@ -110,6 +112,8 @@ class Post(db.Model):
     image = db.Column(db.String(150))
     id_user = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     id_target = db.Column(db.Integer, db.ForeignKey('user.id'))
+    id_challenge = db.Column(db.Integer, db.ForeignKey('challenge.id'))
+    id_bet = db.Column(db.Integer, db.ForeignKey('bet.id'))
     comments = db.relationship('Comment', backref='original_post', lazy=True)
 
     def __repr__(self):
@@ -121,12 +125,51 @@ class Chug(db.Model):
     title = db.Column(db.String(100), nullable=False, default='CHUG GIVEN!')
     date_given = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     date_taken = db.Column(db.DateTime)
+    active = db.Column(db.Boolean, nullable=False, default=True)
+    accepted = db.Column(db.Boolean, nullable=False, default=False)
     taken = db.Column(db.Boolean, nullable=False, default=False)
     id_taker = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     id_giver = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
         return "Chug(ID taker: {}; ID giver: {})".format(self.id_taker, self.id_giver)
+
+    def create_notification(self):
+        users = User.query.all()
+        users.pop(5)
+        title = "NEW CHUG"
+        for user in users:
+            if user == self.taker:
+                content = "{} has given you a chug, what will you do?!".format(self.giver.username)
+            else:
+                content = "{} has given {} a chug!".format(self.giver.username, self.taker.username)
+            link = url_for('users.chug', chug_id=self.id)
+            user.notification(title=title, content=content, link=link)
+
+    def accept_notification(self):
+        users = User.query.all()
+        users.pop(5)
+        if self.accepted:
+            title = "ACCEPT CHUG"
+            content = "{} has accepted the chug by {}!!".format(self.taker.username, self.giver.username)
+        else:
+            title = "REFUSE CHUG"
+            content = "{} has spent ₲₲₲ to defend the chug by {}...".format(self.taker.username, self.giver.username)
+        link = url_for('users.chug', chug_id=self.id)
+        for user in users:
+            user.notification(title=title, content=content, link=link)
+
+    def auto_accept_notification(self):
+        users = User.query.all()
+        users.pop(5)
+        title = "ACCEPT CHUG"
+        content = "{} has accepted the chug by {} because he didn't respond within a day!".format(self.taker.username, self.giver.username)
+        link = "/chug/id/"+str(self.id) #application context is not always available...
+        for user in users:
+            if user == self.taker:
+                content = "You took too long (>24hrs) to respond to the chug by {}, so it has been automatically accepted".format(self.giver.username)
+            user.notification(title=title, content=content, link=link)
+
 
 
 class Notification(db.Model):
@@ -175,11 +218,98 @@ class Challenge(db.Model):
     won = db.Column(db.Boolean)
     amount = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    time_limit = db.Column(db.DateTime, nullable=False)
     id_challenger = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    id_challengee = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    id_challengee = db.Column(db.Integer, db.ForeignKey('user.id'))
+    posts = db.relationship('Post', backref='challenge', lazy=True)
 
     def __repr__(self):
         return "Challenge({} |  by {} to {})".format(self.title, self.id_challenger, self.id_challengee)
+
+    def add_post(self, title, content):
+        type = "Challenge"
+        id_user = 6
+        id_challenge = self.id
+        post = Post(title=title, content=content, type=type, id_user=id_user, id_challenge=id_challenge)
+        db.session.add(post)
+        db.session.commit()
+
+    def post_content(self):
+        content = """Title: {}
+        Description: {}
+        Amount: {}.00 ₲""".format(self.title, self.description, self.amount)
+        return content
+
+    def create_post(self):
+        title = "{} has issued a challenge to {}"
+        if self.challengee:
+            title = title.format(self.challenger.username, self.challengee.username)
+        else:
+            title = title.format(self.challenger.username, "anyone. Be the first to accept it!")
+        content = self.post_content()
+        self.add_post(title, content)
+
+    def modify_post(self):
+        post = self.posts[0]
+        post.content = self.post_content()
+        post.content += """\nTHIS CHALLENGE HAS BEEN MODIFIED"""
+        db.session.commit()
+
+    def accept_post(self):
+        title = "The challenge: '{}' has been accepted".format(self.title)
+        content = self.post_content()
+        self.add_post(title, content)
+
+    def finish_post(self):
+        title = "The challenge: '{}' is done".format(self.title)
+        content = self.post_content()
+        if self.won:
+            completed = "completed"
+        else:
+            completed = "not completed"
+        content += """\nThis challenge was {}.""".format(completed)
+        self.add_post(title, content)
+
+    def create_notification(self):
+        title = "NEW CHALLENGE"
+        content = "{} has issued a challenge to you!".format(self.challenger.username)
+        link = url_for('posts.edit_challenge', challenge_id = self.id)
+        self.challengee.notification(title=title, content=content, link=link)
+
+    def modify_notification(self):
+        title = "MODIFY CHALLENGE"
+        if self.accepted_by_challenger:
+            modifier = self.challenger
+            accepter = self.challengee
+        else:
+            modifier = self.challengee
+            accepter = self.challenger
+        content = "{} has modified the challenge: '{}'!".format(modifier.username, self.title)
+        link = url_for('posts.edit_challenge', challenge_id = self.id)
+        accepter.notification(title=title, content=content, link=link)
+
+    def accept_notification(self):
+        title = "ACCEPT CHALLENGE"
+        content = "The challenge: '{}' has been accepted!".format(self.title)
+        link = url_for('posts.challenge', challenge_id = self.id)
+        users = User.query.all()
+        users.pop(5)
+        for user in users:
+            user.notification(title=title, content=content, link=link)
+
+    def finish_notification(self):
+        title = "FINISH CHALLENGE"
+        content = "The challenge: '{}' has {}been completed"
+        link = url_for('posts.challenge', challenge_id=self.id)
+        if self.won:
+            content = content.format(self.title, "")
+        else:
+            content = content.format(self.title, "not ")
+        users = User.query.all()
+        users.pop(5)
+        for user in users:
+            user.notification(title=title, content=content, link=link)
+
 
 
 class Bet(db.Model):
@@ -188,7 +318,7 @@ class Bet(db.Model):
     description = db.Column(db.String(300))
     accepted_by_bookmaker = db.Column(db.Boolean, nullable=False, default=True)
     accepted_by_bettaker = db.Column(db.Boolean, nullable=False, default=False)
-    active = db.Column(db.Boolean, nullable=False, default=False)
+    active = db.Column(db.Boolean, nullable=False, default=True)
     win_claim = db.Column(db.Boolean)
     won = db.Column(db.Boolean)
     amount = db.Column(db.Integer, nullable=False)
@@ -196,9 +326,118 @@ class Bet(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     id_bookmaker = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     id_bettaker= db.Column(db.Integer, db.ForeignKey('user.id'))
+    posts = db.relationship('Post', backref='bet', lazy=True)
 
     def __repr__(self):
         return "Bet({} | Bookmaker: {} - Taker: {})".format(self.title, self.id_bookmaker, self.id_bettaker)
+
+    def add_post(self, title, content):
+        type = "Bet"
+        id_user = 6
+        id_bet = self.id
+        post = Post(title=title, content=content, type=type, id_user=id_user, id_bet=id_bet)
+        db.session.add(post)
+        db.session.commit()
+
+    def post_content(self):
+        content = """Title: {}
+    Description: {}
+    Amount: {:.2f} ₲
+    Odds: {}""".format(self.title, self.description, self.amount, self.odds)
+        return content
+
+    def create_post(self):
+        if not self.bettaker:
+            bettaker = "the first person willing to accept it"
+            optional = "\nGo to the 'Available bets' section to accept."
+        else:
+            bettaker = self.bettaker.username
+            optional = ''
+        title = "{} has issued a bet to {}!".format(self.bookmaker.username, bettaker)
+        content = self.post_content() + optional
+        self.add_post(title, content)
+
+    def create_notification(self):
+        title = "NEW BET"
+        if not self.bettaker:
+            content = "{} has issued a bet to the first person willing to accept!".format(self.bookmaker.username)
+            link = url_for('posts.available_bets')
+            users = User.query.all()
+            users.pop(5)
+            users.remove(self.bookmaker)
+            for user in users:
+                user.notification(title=title, content=content, link=link)
+        else:
+            content = "{} has issued a bet to you.".format(self.bookmaker.username)
+            link = url_for('posts.edit_bet', bet_id=self.id)
+            self.bettaker.notification(title=title, content=content, link=link)
+
+    def modify_post(self):
+        post = self.posts[0]
+        post.content = self.post_content()
+        post.content += "\nTHIS BET HAS BEEN MODIFIED"
+        db.session.commit()
+
+    def modify_notification(self):
+        title = "MODIFY BET"
+        if self.accepted_by_bookmaker:
+            modifier = self.bookmaker
+            accepter = self.bettaker
+        else:
+            modifier = self.bettaker
+            accepter = self.bookmaker
+        content = "{} has modified the bet: '{}'!".format(modifier.username, self.title)
+        link = url_for('posts.edit_bet', bet_id=self.id)
+        accepter.notification(title=title, content=content, link=link)
+
+    def accept_post(self, was_public=False):
+        if was_public:
+            title = "{} has accepted the public bet from {}"
+        else:
+            title = "{} has accepted the bet by {}"
+        title = title.format(self.bettaker.username, self.bookmaker.username)
+        content = self.post_content()
+        if was_public:
+            content += "\nThis bet is no longer available..."
+        self.add_post(title, content)
+
+    def accept_notification(self, was_public=False):
+        title = "ACCEPT BET"
+        content = "The bet '{}' has been accepted{}"
+        if was_public:
+            content = content.format(self.title, ", it is no longer available...")
+        else:
+            content = content.format(self.title, '!')
+        link = url_for('posts.bet', bet_id=self.id)
+        users = User.query.all()
+        users.pop(5)
+        for user in users:
+            user.notification(title=title, content=content, link=link)
+        print("ACCEPT NOTIFICATION", file=sys.stdout)
+
+    def finish_post(self):
+        if self.won:
+            winner = self.bettaker
+        else:
+            winner = self.bookmaker
+        title = "The bet '{}' is finished".format(self.title)
+        content = self.post_content()
+        content += "\nThis bet has been won by " + winner.username
+        self.add_post(title, content)
+
+    def finish_notification(self):
+        if self.won:
+            winner = self.bettaker
+        else:
+            winner = self.bookmaker
+        title = "FINISH BET"
+        content = "The bet '{}' has been won by {}".format(self.title, winner.username)
+        link = url_for('posts.bet', bet_id=self.id)
+        users = User.query.all()
+        users.pop(5)
+        for user in users:
+            user.notification(title=title, content=content, link=link)
+
 
 
 class Comment(db.Model):

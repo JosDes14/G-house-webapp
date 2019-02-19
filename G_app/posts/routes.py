@@ -2,12 +2,12 @@ import sys
 import json
 from flask import render_template, url_for, flash, redirect, request, jsonify, abort, Blueprint
 from wtforms import RadioField
-from G_app.posts.forms import PostForm, PostFormGeneral, ChallengeForm, EditChallengeForm, BetForm
+from G_app.posts.forms import PostForm, PostFormGeneral, ChallengeForm, EditChallengeForm, BetForm, EditBetForm
 from G_app.models import User, Post, Challenge, Bet
 from G_app import db, scheduler
 from flask_login import current_user, login_required
 from G_app.posts.utils import *
-from datetime import datetime
+from datetime import datetime, timedelta
 
 posts = Blueprint('posts', __name__)
 
@@ -24,7 +24,7 @@ def add_post():
 def context_processor():
     chug = chug_matrix()
     members=member_ls()
-    return dict(chug=chug, members=members)
+    return dict(chug_matrix=chug, members=members)
 
 
 @posts.route("/post_rating", methods=['POST'])
@@ -123,6 +123,33 @@ def new_post(post_type):
 
 
 
+@posts.route("/bet_completed", methods=["POST"])
+@login_required
+def bet_completed():
+    bet_id = json.loads(request.form.get('bet_id'))
+    is_verification = json.loads(request.form.get('is_verification'))
+    bet_won = json.loads(request.form.get('bet_won'))
+    bet = Bet.query.get_or_404(bet_id)
+    if is_verification:
+        bet.won = bet_won
+        bet.active = False
+        bet.finish_notification()
+        bet.finish_post()
+        if bet.won:
+            amount = bet.odds*bet.amount - bet.amount
+            bet.bookmaker.transfer(recipient=bet.bettaker, amount=amount, title="Bet transfer")
+        else:
+            bet.bettaker.transfer(recipient=bet.bookmaker, amount=bet.amount, title="Bet transfer")
+    else:
+        bet.win_claim = True
+        content = "{} claims to have won the bet '{}'".format(bet.bettaker.username, bet.title)
+        link = url_for('posts.my_bets')
+        bet.bookmaker.notification(title="BET WIN CLAIM", content=content, link=link)
+    return jsonify({ 'content' : 'success' })
+
+
+
+
 @posts.route("/new/bet", methods=['GET', 'POST'])
 @login_required
 def new_bet():
@@ -142,11 +169,53 @@ def new_bet():
         bet = Bet(title=title, description=description, amount=amount, odds=odds, id_bookmaker=current_user.id, id_bettaker=target_id)
         db.session.add(bet)
         db.session.commit()
-        create_bet_post(bet)
-        create_bet_notification(bet)
+        bet.create_post()
+        bet.create_notification()
         flash("Successfully created bet", 'success')
         return redirect(url_for('main.home'))
     return render_template('new_bet.html', form=form)
+
+
+
+@posts.route("/edit/bet/id/<int:bet_id>", methods=['GET', 'POST'])
+@login_required
+def edit_bet(bet_id):
+    bet = Bet.query.get_or_404(bet_id)
+    if bet.accepted_by_bookmaker and bet.accepted_by_bettaker or\
+    current_user not in {bet.bettaker, bet.bookmaker} or\
+    current_user == bet.bookmaker and bet.accepted_by_bookmaker or\
+    current_user == bet.bettaker and bet.accepted_by_bettaker or\
+    not bet.active:
+        abort(403)
+    form = EditBetForm()
+    if form.validate_on_submit():
+        if bet.description == form.description.data and bet.amount == form.amount.data and bet.odds == form.odds.data:
+            bet.accepted_by_bettaker = True
+            bet.accepted_by_bookmaker = True
+            bet.accept_post()
+            bet.accept_notification()
+            flash("The bet has been accepted successfully", 'success')
+        else:
+            bet.description = form.description.data
+            bet.amount = form.amount.data
+            bet.odds = form.odds.data
+            bet.accepted_by_bettaker = not bet.accepted_by_bettaker
+            bet.accepted_by_bookmaker = not bet.accepted_by_bookmaker
+            bet.modify_post()
+            bet.modify_notification()
+            flash("Modified bet", 'success')
+        return redirect(url_for('main.home'))
+    elif request.method == 'POST':
+        key = request.form.get('delete_key')
+        if key == "D3l3t3":
+            bet.active = False
+            db.session.commit()
+        flash("Bet refused", 'danger')
+    elif request.method == 'GET':
+        form.description.data = bet.description
+        form.amount.data = bet.amount
+        form.odds.data = bet.odds
+    return render_template('edit_bet.html', form=form, bet=bet)
 
 
 
@@ -160,15 +229,45 @@ def available_bets():
         user = User.query.get(user_id)
         bet = Bet.query.get(bet_id)
         bet.bettaker = user
-        accept_bet_notification(bet)
-        accept_bet_post(bet, was_public=True)
+        bet.accepted_by_bettaker = True
         db.session.commit()
+        bet.accept_post(was_public=True)
+        bet.accept_notification(was_public=True)
         return jsonify({ 'user' : user.username, 'bet' : bet.title })
     return render_template('available_bets.html', bets=bets)
 
 
 
+@posts.route("/my_bets")
+@posts.route("/my_bets/page_m=<int:page_m>/page_t=<int:page_t>")
+@login_required
+def my_bets(page_m=1, page_t=1):
+    bets_made = Bet.query.filter_by(id_bookmaker=current_user.id).order_by(Bet.date.desc()).paginate(page=page_m, per_page=5)
+    bets_target = Bet.query.filter_by(id_bettaker=current_user.id).order_by(Bet.date.desc()).paginate(page=page_t, per_page=5)
+    bets_pending, bets_active = pending_active_bets(current_user.bets_made + current_user.bets_taken)
+    return render_template('my_bets.html', bets_made=bets_made, bets_target=bets_target, bets_pending=bets_pending, bets_active=bets_active)
+
+
+
+@posts.route("/all_bets")
+@login_required
+def all_bets():
+    page = request.args.get('page', 1, type=int)
+    bets = Bet.query.order_by(Bet.date.desc()).paginate(page=page, per_page=10)
+    return render_template('all_bets.html', bets=bets)
+
+
+
+@posts.route("/bet/id/<int:bet_id>")
+@login_required
+def bet(bet_id):
+    bet = Bet.query.get_or_404(bet_id)
+    return render_template("bet.html", bet=bet)
+
+
+
 @posts.route("/challenge/id/<int:challenge_id>")
+@login_required
 def challenge(challenge_id):
     challenge = Challenge.query.get_or_404(challenge_id)
     return render_template("challenge.html", challenge=challenge)
@@ -202,24 +301,26 @@ def edit_challenge(challenge_id):
     if challenge.accepted_by_challenger and challenge.accepted_by_challengee or\
     current_user not in {challenge.challengee, challenge.challenger} or\
     current_user == challenge.challenger and challenge.accepted_by_challenger or\
-    current_user == challenge.challenger and challenge.accepted_by_challenger or\
+    current_user == challenge.challengee and challenge.accepted_by_challengee or\
     not challenge.active:
         abort(403)
     form = EditChallengeForm()
     if form.validate_on_submit():
-        if form.description.data == challenge.description and form.amount.data == challenge.amount:
+        if form.description.data == challenge.description and form.amount.data == challenge.amount and challenge.time_limit == form.time_limit.data:
             challenge.accepted_by_challenger = True
             challenge.accepted_by_challengee = True
-            accept_challenge_post(challenge)
-            accept_challenge_notification(challenge)
+            challenge.accept_post()
+            challenge.accept_notification()
+            scheduler.add_job(func=challenge_out_of_time, args=[challenge.id], trigger='date', run_date=challenge.time_limit, id='chal'+str(challenge.id))
             flash("The challenge has been accepted", "success")
         else:
             challenge.description = form.description.data
             challenge.amount = form.amount.data
+            challenge.time_limit = form.time_limit.data
             challenge.accepted_by_challenger = not challenge.accepted_by_challenger
             challenge.accepted_by_challengee = not challenge.accepted_by_challengee
-            modify_challenge_notification(challenge)
-            modify_challenge_post(challenge)
+            challenge.modify_post()
+            challenge.modify_notification()
             flash("Modified challenge", 'success')
         db.session.commit()
         return redirect(url_for('main.home'))
@@ -228,9 +329,11 @@ def edit_challenge(challenge_id):
         if key == "D3l3t3":
             challenge.active = False
             db.session.commit()
+        flash("Challenge refused", 'danger')
     elif request.method == 'GET':
         form.description.data = challenge.description
         form.amount.data = challenge.amount
+        form.time_limit.data = challenge.time_limit
     return render_template('edit_challenge.html',form=form, challenge=challenge)
 
 
@@ -241,15 +344,18 @@ def challenge_completed():
     challenge_id = json.loads(request.form.get('challenge_id'))
     is_verification = json.loads(request.form.get('is_verification'))
     completed = json.loads(request.form.get('completed'))
-    challenge = Challenge.query.get_or_404(int(challenge_id))
+    challenge = Challenge.query.get_or_404(challenge_id)
     if is_verification:
         challenge.won = completed
         challenge.active = False #dont need to commit db because db.session.commit() is called in transfer method
-        finish_challenge_notification(challenge)
-        finish_challenge_post(challenge)
+        challenge.finish_post()
+        challenge.finish_notification()
         if completed:
             challenge.challenger.transfer(recipient=challenge.challengee, amount=challenge.amount, title="Challenge transfer")
+        else:
+            challenge.challengee.transfer(recipient=challenge.challenger, amount=challenge.amount, title="Challenge transfer")
     else:
+        scheduler.remove_job('chal'+str(challenge_id))
         challenge.win_claim = True #dont need to commit db because db.session.commit() is called in notification method
         content = "{} claims to have won the challenge '{}'".format(challenge.challengee.username, challenge.title)
         link = url_for('posts.my_challenges')
@@ -265,10 +371,13 @@ def new_challenge():
     form = ChallengeForm()
     if form.validate_on_submit():
         id_challengee = User.query.filter_by(username=form.target.data).first().id
-        challenge = Challenge(title=form.title.data, description=form.description.data, amount=form.amount.data, id_challenger=current_user.id, id_challengee=id_challengee)
+        challenge = Challenge(title=form.title.data, description=form.description.data, amount=form.amount.data, time_limit=form.time_limit.data, id_challenger=current_user.id, id_challengee=id_challengee)
         db.session.add(challenge)
         db.session.commit()
-        create_challenge_post(challenge)
-        new_challenge_notification(challenge)
+        challenge.create_post()
+        challenge.create_notification()
+        #scheduler.add_job(func=challenge_out_of_time, args=[challenge.id], trigger='date', run_date=form.time_limit.data, id='chal'+str(challenge.id))
         return redirect(url_for('main.home'))
+    elif request.method == 'GET':
+        form.time_limit.data = datetime.today() + timedelta(days=1)
     return render_template('new_challenge.html', form=form)

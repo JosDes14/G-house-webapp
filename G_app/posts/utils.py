@@ -3,7 +3,7 @@ import random
 import string
 import sys
 from PIL import Image
-from G_app.models import User, Post, Chug, Notification
+from G_app.models import User, Post, Chug, Notification, Challenge
 from flask import app, url_for
 from flask_login import current_user
 from G_app import db
@@ -33,7 +33,7 @@ def chug_matrix():
         [0, 0, 0, None, 0],
         [0, 0, 0, 0, None]
     ]
-    chugs_to_be_taken = Chug.query.filter_by(taken=False).all()
+    chugs_to_be_taken = Chug.query.filter(Chug.active==True, Chug.accepted==True).all()
     for chug in chugs_to_be_taken:
         matrix[chug.id_taker - 1][chug.id_giver - 1] += 1
     return matrix
@@ -76,7 +76,7 @@ def number_voted(post_id):
     voters = voter_dict()
     return len(voters[post_id])
 
-
+'''
 def create_bet_post(bet):
     if not bet.bettaker:
         bettaker = "the first person willing to accept it"
@@ -104,7 +104,7 @@ def create_challenge_post(challenge):
     title = "{} has issued a challenge to {}! (ID: {})".format(challenge.challenger.username, challenge.challengee.username, challenge.id)
     content = """Title: {}
 Description: {}
-Amount: {}.00₲""".format(challenge.title, challenge.description, challenge.amount)
+Amount: {}.00 ₲""".format(challenge.title, challenge.description, challenge.amount)
     type = "Challenge"
     id_user = 6 #admin
     post = Post(title=title, content=content, type=type, id_user=id_user)
@@ -214,6 +214,35 @@ def finish_challenge_notification(challenge):
     users.pop(5)
     for user in users:
         user.notification(title=title, content=content, link=link)
+'''
+
+def challenge_out_of_time(id):
+    challenge = Challenge.query.get(id)
+    if challenge.active:
+        challenge.active = False
+        challenge.won = False
+        db.session.commit()
+        challenge.challengee.transfer(recipient=challenge.challenger, amount=challenge.amount,
+            title="Challenge transfer",
+            description="Challenge out of time")
+        users = User.query.all()
+        users.pop(5)
+        for user in users:
+            title = "CHALLENGE LOST"
+            content = "The challenge: '{}' has been lost because it was not finished in time.".format(challenge.title)
+            link = "/challenge/id/{}".format(challenge.id) #hardcoded because app context not available
+            user.notification(title=title, content=content, link=link)
+
+
+def pending_active_bets(bets):
+    pendings = []
+    actives = []
+    for bet in bets:
+        if bet.active and (not bet.accepted_by_bettaker or not bet.accepted_by_bookmaker):
+            pendings.append(bet)
+        elif bet.active and bet.accepted_by_bettaker and bet.accepted_by_bookmaker:
+            actives.append(bet)
+    return pendings, actives
 
 
 def pending_active_challenges(challenges):

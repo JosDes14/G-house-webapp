@@ -32,9 +32,9 @@
             <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-toggle="dropdown">Bet</button>
             <div class="dropdown-menu">
               <a class="dropdown-item" href="{{ url_for('posts.new_bet') }}">Create bet</a>
-              <a class="dropdown-item" href="#">My bets</a>
+              <a class="dropdown-item" href="{{ url_for('posts.my_bets') }}">My bets</a>
               <a class="dropdown-item" href="{{ url_for('posts.available_bets') }}">Available bets</a>
-              <a class="dropdown-item" href="#">All bets</a>
+              <a class="dropdown-item" href="{{ url_for('posts.all_bets') }}">All bets</a>
             </div>
           </div>
         </div>

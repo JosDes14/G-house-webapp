@@ -52,7 +52,18 @@
             <div class="row">
               <div class="col-6">
                 <div class="form-group">
-                  {{ form.amount.label(class="form-control-label") }}
+                  <div class="row">
+                    <div class="col-9">
+                      {{ form.amount.label(class="form-control-label") }}
+                    </div>
+                    <div class="col-3" align="right">
+                      <a href="#" data-toggle="popover" data-trigger="focus" title="Amount" data-content="This is the
+                      amount that the bettaker will bet. If you target a specific someone for this bet then you two can
+                      go back and forth on the amount." style="color:black">
+                        <i class="fas fa-info-circle"></i>
+                      </a>
+                    </div>
+                  </div>
                   {% if form.amount.errors %}
                       {{ form.amount(class="form-control form-control-lg is-invalid") }}
                       <div class="invalid-feedback">
@@ -67,7 +78,18 @@
               </div>
               <div class="col-6">
                 <div class="form-group">
-                  {{ form.odds.label(class="form-control-label") }}
+                  <div class="row">
+                    <div class="col-9">
+                      {{ form.odds.label(class="form-control-label") }}
+                    </div>
+                    <div class="col-3" align="right">
+                      <a href="#" data-toggle="popover" data-trigger="focus" title="Odds" data-content="Enter odds decimal style.
+                      E.g. if you set odds to 2.1 and the bettaker accepts an amount of 10.00 ₲, the bettaker can make a profit of
+                      2.1*10.00 - 10.00 = 11.00 ₲." style="color:black">
+                        <i class="fas fa-info-circle"></i>
+                      </a>
+                    </div>
+                  </div>
                   {% if form.odds.errors %}
                       {{ form.odds(class="form-control form-control-lg is-invalid") }}
                       <div class="invalid-feedback">

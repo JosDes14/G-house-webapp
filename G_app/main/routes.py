@@ -22,7 +22,7 @@ scheduler.add_job(func=submit_votes_if_timelimit, trigger='cron', day_of_week=VO
 def context_processor():
     chug = chug_matrix()
     members=member_ls()
-    return dict(chug=chug, members=members)
+    return dict(chug_matrix=chug, members=members)
 
 
 @main.route("/")
@@ -156,6 +156,8 @@ def your_notifications(user_id):
 @login_required
 def recent_notifications():
     notifications = current_user.last_notifications(5)
+    if len(current_user.new_notifications()) > len(notifications):
+        notifications = current_user.new_notifications()
     return jsonify([{
         'id' : n.id,
         'title' : n.title,
